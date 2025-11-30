@@ -1,0 +1,326 @@
+# (VL) Configuración de filtrado geográfico para afiliaciones españolas
+# Este archivo contiene la lógica local para identificar autores españoles
+
+# Marcadores que indican afiliación española (obligatorio al menos uno)
+spanish_markers:
+  - spain
+  - españa
+  - spanish
+  - español
+  - espana
+
+# Ciudades españolas (usadas como refuerzo, no suficientes por sí solas)
+spanish_cities:
+  # Capitales de provincia
+  - madrid
+  - barcelona
+  - valencia
+  - sevilla
+  - seville
+  - zaragoza
+  - málaga
+  - malaga
+  - murcia
+  - palma
+  - las palmas
+  - bilbao
+  - alicante
+  - córdoba
+  - cordoba
+  - valladolid
+  - vigo
+  - gijón
+  - gijon
+  - hospitalet
+  - coruña
+  - coruna
+  - a coruña
+  - vitoria
+  - gasteiz
+  - granada
+  - elche
+  - oviedo
+  - badalona
+  - cartagena
+  - terrassa
+  - jerez
+  - sabadell
+  - móstoles
+  - mostoles
+  - alcalá
+  - alcala
+  - pamplona
+  - iruña
+  - fuenlabrada
+  - almería
+  - almeria
+  - leganés
+  - leganes
+  - donostia
+  - san sebastián
+  - san sebastian
+  - santander
+  - burgos
+  - albacete
+  - getafe
+  - salamanca
+  - alcorcón
+  - alcorcon
+  - logroño
+  - logrono
+  - huelva
+  - badajoz
+  - tarragona
+  - lleida
+  - lérida
+  - lerida
+  - cádiz
+  - cadiz
+  - león
+  - leon
+  - jaén
+  - jaen
+  - ourense
+  - orense
+  - lugo
+  - pontevedra
+  - girona
+  - gerona
+  - cáceres
+  - caceres
+  - toledo
+  - guadalajara
+  - ciudad real
+  - cuenca
+  - segovia
+  - ávila
+  - avila
+  - soria
+  - zamora
+  - palencia
+  - teruel
+  - huesca
+  - mérida
+  - merida
+  - castellón
+  - castellon
+  - reus
+  - manresa
+
+# Países extranjeros (lista negra - si aparecen, se excluye la afiliación)
+foreign_countries:
+  # Europa
+  - france
+  - francia
+  - lyon
+  - paris
+  - marseille
+  - italy
+  - italia
+  - rome
+  - roma
+  - milan
+  - milano
+  - germany
+  - alemania
+  - berlin
+  - munich
+  - frankfurt
+  - united kingdom
+  - uk
+  - england
+  - inglaterra
+  - london
+  - londres
+  - scotland
+  - escocia
+  - wales
+  - ireland
+  - irlanda
+  - dublin
+  - portugal
+  - lisbon
+  - lisboa
+  - porto
+  - netherlands
+  - holanda
+  - amsterdam
+  - rotterdam
+  - belgium
+  - bélgica
+  - belgica
+  - brussels
+  - bruselas
+  - bruxelles
+  - switzerland
+  - suiza
+  - zurich
+  - geneva
+  - ginebra
+  - denmark
+  - dinamarca
+  - copenhagen
+  - sweden
+  - suecia
+  - stockholm
+  - estocolmo
+  - norway
+  - noruega
+  - oslo
+  - finland
+  - finlandia
+  - helsinki
+  - austria
+  - vienna
+  - viena
+  - poland
+  - polonia
+  - warsaw
+  - varsovia
+  - czech republic
+  - chequia
+  - prague
+  - praga
+  - greece
+  - grecia
+  - athens
+  - atenas
+  - romania
+  - rumania
+  - bucharest
+  - hungary
+  - hungría
+  - budapest
+  - croatia
+  - croacia
+  - slovenia
+  - eslovenia
+  - slovakia
+  - eslovaquia
+  - bulgaria
+
+  # América del Norte
+  - usa
+  - united states
+  - estados unidos
+  - u.s.a
+  - u.s.a.
+  - new york
+  - california
+  - texas
+  - florida
+  - boston
+  - chicago
+  - los angeles
+  - san francisco
+  - seattle
+  - washington
+  - philadelphia
+  - canada
+  - canadá
+  - toronto
+  - montreal
+  - vancouver
+
+  # América Latina
+  - mexico
+  - méxico
+  - monterrey
+  - guadalajara
+  - brazil
+  - brasil
+  - são paulo
+  - sao paulo
+  - rio de janeiro
+  - argentina
+  - buenos aires
+  - chile
+  - santiago
+  - colombia
+  - bogota
+  - bogotá
+  - medellín
+  - peru
+  - perú
+  - lima
+  - venezuela
+  - caracas
+  - ecuador
+  - quito
+  - uruguay
+  - montevideo
+  - bolivia
+  - paraguay
+  - cuba
+  - habana
+
+  # Asia
+  - china
+  - beijing
+  - shanghai
+  - hong kong
+  - guangzhou
+  - shenzhen
+  - wuhan
+  - japan
+  - japón
+  - tokyo
+  - osaka
+  - kyoto
+  - south korea
+  - corea
+  - seoul
+  - seul
+  - india
+  - delhi
+  - mumbai
+  - bangalore
+  - taiwan
+  - taipei
+  - singapore
+  - singapur
+  - malaysia
+  - indonesia
+  - thailand
+  - tailandia
+  - bangkok
+  - vietnam
+  - philippines
+  - filipinas
+
+  # Oceanía
+  - australia
+  - sydney
+  - melbourne
+  - brisbane
+  - new zealand
+  - nueva zelanda
+  - auckland
+
+  # Oriente Medio
+  - israel
+  - tel aviv
+  - jerusalem
+  - saudi arabia
+  - arabia saudita
+  - dubai
+  - qatar
+  - turkey
+  - turquía
+  - istanbul
+  - estambul
+  - iran
+  - irán
+
+  # África
+  - south africa
+  - sudáfrica
+  - cape town
+  - johannesburg
+  - egypt
+  - egipto
+  - cairo
+  - morocco
+  - marruecos
+  - nigeria
+  - kenya

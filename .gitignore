@@ -1,0 +1,21 @@
+# Entorno virtual
+venv/
+
+# Cache de Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Cache de pytest (ahora en data/)
+data/.pytest_cache/
+
+# Datos generados (logs y estado)
+data/logs/
+data/*.json
+
+# IDE
+.vscode/
+.idea/
+
+# Sistema
+.DS_Store

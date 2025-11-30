@@ -1,0 +1,97 @@
+# Configuración de descarga de PubMed
+# Políticas oficiales: https://www.ncbi.nlm.nih.gov/books/NBK25497/
+
+# === POLÍTICAS DE ACCESO NCBI ===
+rate_limiting:
+  # API Key gratuita: máximo 10 requests/segundo
+  # Sin API Key: máximo 3 requests/segundo
+  requests_per_second: 3
+
+  # Tiempo de espera mínimo entre requests (en segundos)
+  min_delay_between_requests: 0.34  # ~3 requests/segundo
+
+  # Requests por segundo fuera de horas pico (weekends, 9pm-5am EST)
+  requests_per_second_off_peak: 10
+  min_delay_off_peak: 0.1
+
+# === CONFIGURACIÓN DE LOTES ===
+batch:
+  # Número de IDs a procesar por lote (efetch acepta hasta 500)
+  ids_per_batch: 200
+
+  # Número de resultados por búsqueda (esearch retmax)
+  search_batch_size: 10000
+
+  # Máximo de reintentos por error
+  max_retries: 3
+
+  # Tiempo de espera entre reintentos (segundos)
+  retry_delay: 5
+
+# === CONFIGURACIÓN DE DESCARGA ===
+download:
+  # Email requerido por NCBI (cambiar por el tuyo)
+  email: "marcx2002@gmail.com"
+
+  # API Key (opcional, aumenta rate limit a 10/s)
+  # Obtener en: https://www.ncbi.nlm.nih.gov/account/settings/
+  api_key: null
+
+  # Base de datos a consultar
+  database: "pubmed"
+
+  # Tipo de retorno para efetch
+  rettype: "xml"
+
+  # Modo de retorno
+  retmode: "xml"
+
+# === QUERY DE BÚSQUEDA ===
+search:
+  # Query principal (ajustar según necesidad)
+  query: "Spain[Affiliation]"
+
+  # Filtro de fechas (opcional)
+  # Formato: YYYY/MM/DD o YYYY/MM o YYYY
+  date_from: "2015/01/01"
+  date_to: "2015/12/31"
+
+  # Máximo de artículos a descargar (null = sin límite)
+  max_articles: 50
+
+# === GESTIÓN DE ESTADO ===
+state:
+  # Archivo para guardar progreso
+  state_file: "data/download_state.json"
+
+  # Frecuencia de guardado del estado (cada N artículos)
+  save_frequency: 100
+
+  # Directorio para logs
+  log_dir: "data/logs"
+
+  # Nivel de log (DEBUG, INFO, WARNING, ERROR)
+  log_level: "INFO"
+
+# === CONFIGURACIÓN DE BASE DE DATOS ===
+database_config:
+  # Frecuencia de commit a la BD (cada N artículos)
+  commit_frequency: 50
+
+  # Usar transacciones para mejor rendimiento
+  use_transactions: true
+
+  # Pool de conexiones (para futuras optimizaciones)
+  connection_pool_size: 5
+
+# === TOLERANCIA A FALLOS ===
+fault_tolerance:
+  # Continuar ante errores de parsing
+  skip_malformed_records: true
+
+  # Continuar ante errores de BD
+  skip_db_errors: true
+
+  # Guardar registros con error en archivo separado
+  save_error_records: true
+  error_file: "data/error_records.json"

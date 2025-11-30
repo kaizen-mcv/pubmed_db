@@ -1,0 +1,13 @@
+# Dependencias para descarga de PubMed
+
+# BioPython - API de NCBI/PubMed
+biopython>=1.86
+
+# Base de datos PostgreSQL
+psycopg2-binary>=2.9.0
+
+# Configuración YAML
+pyyaml>=6.0
+
+# Zonas horarias (para rate limiter)
+tzdata>=2024.1

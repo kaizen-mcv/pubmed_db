@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(PGPASSWORD='REDACTED_PWD' psql:*)",
+      "Bash(tree:*)",
+      "Bash(source:*)",
+      "Bash(pytest:*)",
+      "Bash(pip install:*)",
+      "Bash(python scripts/download_pubmed.py:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

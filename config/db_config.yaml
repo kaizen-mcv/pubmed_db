@@ -1,0 +1,13 @@
+# Configuración de base de datos PostgreSQL
+
+database:
+  host: localhost
+  port: 5432
+  name: pubmed_db
+  user: pubmed_user
+  password: "REDACTED_PWD"
+
+# Configuración del pool de conexiones
+pool:
+  min_connections: 1
+  max_connections: 10
