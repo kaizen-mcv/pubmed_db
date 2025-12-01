@@ -54,10 +54,10 @@ search:
   # Filtro de fechas (opcional)
   # Formato: YYYY/MM/DD o YYYY/MM o YYYY
   date_from: "2015/01/01"
-  date_to: "2015/12/31"
+  date_to: "2020/12/31"
 
   # Máximo de artículos a descargar (null = sin límite)
-  max_articles: 50
+  max_articles: 100000
 
 # === GESTIÓN DE ESTADO ===
 state:

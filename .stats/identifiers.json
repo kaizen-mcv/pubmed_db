@@ -1,0 +1,15 @@
+{
+  "authors_with_orcid": 13320,
+  "unique_authors_with_orcid": 9801,
+  "authors_with_email": 0,
+  "unique_authors_with_email": 0,
+  "articles_with_doi": 98663,
+  "total_articles": 99849,
+  "total_author_records": 414316,
+  "total_unique_authors": 173512,
+  "percentages": {
+    "orcid": 5.65,
+    "email": 0.0,
+    "doi": 98.81
+  }
+}

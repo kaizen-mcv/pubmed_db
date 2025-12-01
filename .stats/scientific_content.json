@@ -1,0 +1,499 @@
+{
+  "top_50_mesh_terms": [
+    {
+      "term": "Humans",
+      "count": 55826
+    },
+    {
+      "term": "Female",
+      "count": 32330
+    },
+    {
+      "term": "Male",
+      "count": 31599
+    },
+    {
+      "term": "Animals",
+      "count": 19733
+    },
+    {
+      "term": "Aged",
+      "count": 19361
+    },
+    {
+      "term": "Middle Aged",
+      "count": 17940
+    },
+    {
+      "term": "Adult",
+      "count": 16936
+    },
+    {
+      "term": "Spain",
+      "count": 8270
+    },
+    {
+      "term": "Mice",
+      "count": 8119
+    },
+    {
+      "term": "Young Adult",
+      "count": 7000
+    },
+    {
+      "term": "Child",
+      "count": 6164
+    },
+    {
+      "term": "Adolescent",
+      "count": 6025
+    },
+    {
+      "term": "80 and over",
+      "count": 5671
+    },
+    {
+      "term": "Treatment Outcome",
+      "count": 5554
+    },
+    {
+      "term": "Models",
+      "count": 4810
+    },
+    {
+      "term": "Risk Factors",
+      "count": 4513
+    },
+    {
+      "term": "Prospective Studies",
+      "count": 4301
+    },
+    {
+      "term": "Retrospective Studies",
+      "count": 4129
+    },
+    {
+      "term": "Biomarkers",
+      "count": 3682
+    },
+    {
+      "term": "DNA",
+      "count": 3618
+    },
+    {
+      "term": "Rats",
+      "count": 3559
+    },
+    {
+      "term": "Infant",
+      "count": 3426
+    },
+    {
+      "term": "Gene Expression Regulation",
+      "count": 3353
+    },
+    {
+      "term": "Time Factors",
+      "count": 3257
+    },
+    {
+      "term": "Cross-Sectional Studies",
+      "count": 2993
+    },
+    {
+      "term": "Genetic",
+      "count": 2891
+    },
+    {
+      "term": "RNA",
+      "count": 2849
+    },
+    {
+      "term": "Follow-Up Studies",
+      "count": 2794
+    },
+    {
+      "term": "Cell Line",
+      "count": 2715
+    },
+    {
+      "term": "Animal",
+      "count": 2704
+    },
+    {
+      "term": "Prognosis",
+      "count": 2580
+    },
+    {
+      "term": "Receptors",
+      "count": 2547
+    },
+    {
+      "term": "Surveys and Questionnaires",
+      "count": 2507
+    },
+    {
+      "term": "Europe",
+      "count": 2487
+    },
+    {
+      "term": "Tumor",
+      "count": 2480
+    },
+    {
+      "term": "Mutation",
+      "count": 2444
+    },
+    {
+      "term": "Bacterial",
+      "count": 2348
+    },
+    {
+      "term": "Reproducibility of Results",
+      "count": 2316
+    },
+    {
+      "term": "Preschool",
+      "count": 2251
+    },
+    {
+      "term": "Signal Transduction",
+      "count": 2096
+    },
+    {
+      "term": "Pregnancy",
+      "count": 1997
+    },
+    {
+      "term": "Case-Control Studies",
+      "count": 1968
+    },
+    {
+      "term": "Cohort Studies",
+      "count": 1858
+    },
+    {
+      "term": "Diet",
+      "count": 1804
+    },
+    {
+      "term": "Carcinoma",
+      "count": 1798
+    },
+    {
+      "term": "Brain",
+      "count": 1777
+    },
+    {
+      "term": "Molecular",
+      "count": 1730
+    },
+    {
+      "term": "Disease Models",
+      "count": 1727
+    },
+    {
+      "term": "Prevalence",
+      "count": 1725
+    },
+    {
+      "term": "Antibodies",
+      "count": 1703
+    }
+  ],
+  "publication_types": [
+    {
+      "type": "Journal Article",
+      "count": 93886
+    },
+    {
+      "type": "Research Support, Non-U.S. Gov't",
+      "count": 37493
+    },
+    {
+      "type": "Review",
+      "count": 9972
+    },
+    {
+      "type": "Case Reports",
+      "count": 4568
+    },
+    {
+      "type": "Multicenter Study",
+      "count": 4271
+    },
+    {
+      "type": "Letter",
+      "count": 4037
+    },
+    {
+      "type": "Comparative Study",
+      "count": 3510
+    },
+    {
+      "type": "Comment",
+      "count": 2925
+    },
+    {
+      "type": "Randomized Controlled Trial",
+      "count": 2865
+    },
+    {
+      "type": "Research Support, N.I.H., Extramural",
+      "count": 2515
+    },
+    {
+      "type": "Observational Study",
+      "count": 2495
+    },
+    {
+      "type": "Editorial",
+      "count": 1496
+    },
+    {
+      "type": "Systematic Review",
+      "count": 1307
+    },
+    {
+      "type": "Research Support, U.S. Gov't, Non-P.H.S.",
+      "count": 1103
+    },
+    {
+      "type": "Evaluation Study",
+      "count": 1014
+    },
+    {
+      "type": "Meta-Analysis",
+      "count": 961
+    },
+    {
+      "type": "Validation Study",
+      "count": 894
+    },
+    {
+      "type": "Clinical Trial",
+      "count": 619
+    },
+    {
+      "type": "Clinical Trial, Phase III",
+      "count": 552
+    },
+    {
+      "type": "Published Erratum",
+      "count": 551
+    }
+  ],
+  "top_50_author_keywords": [
+    {
+      "keyword": "Spain",
+      "count": 444
+    },
+    {
+      "keyword": "Inflammation",
+      "count": 366
+    },
+    {
+      "keyword": "Oxidative stress",
+      "count": 365
+    },
+    {
+      "keyword": "Obesity",
+      "count": 345
+    },
+    {
+      "keyword": "inflammation",
+      "count": 328
+    },
+    {
+      "keyword": "Biomarkers",
+      "count": 287
+    },
+    {
+      "keyword": "Epidemiology",
+      "count": 287
+    },
+    {
+      "keyword": "Mortality",
+      "count": 276
+    },
+    {
+      "keyword": "HIV",
+      "count": 260
+    },
+    {
+      "keyword": "cancer",
+      "count": 258
+    },
+    {
+      "keyword": "Depression",
+      "count": 252
+    },
+    {
+      "keyword": "Cancer",
+      "count": 250
+    },
+    {
+      "keyword": "obesity",
+      "count": 249
+    },
+    {
+      "keyword": "Children",
+      "count": 242
+    },
+    {
+      "keyword": "Alzheimer’s disease",
+      "count": 236
+    },
+    {
+      "keyword": "epidemiology",
+      "count": 227
+    },
+    {
+      "keyword": "Treatment",
+      "count": 219
+    },
+    {
+      "keyword": "oxidative stress",
+      "count": 219
+    },
+    {
+      "keyword": "Prognosis",
+      "count": 217
+    },
+    {
+      "keyword": "Breast cancer",
+      "count": 215
+    },
+    {
+      "keyword": "Alzheimer's disease",
+      "count": 211
+    },
+    {
+      "keyword": "Heart failure",
+      "count": 208
+    },
+    {
+      "keyword": "Schizophrenia",
+      "count": 203
+    },
+    {
+      "keyword": "Quality of life",
+      "count": 201
+    },
+    {
+      "keyword": "Aging",
+      "count": 198
+    },
+    {
+      "keyword": "quality of life",
+      "count": 194
+    },
+    {
+      "keyword": "stroke",
+      "count": 193
+    },
+    {
+      "keyword": "Europe",
+      "count": 192
+    },
+    {
+      "keyword": "biomarkers",
+      "count": 191
+    },
+    {
+      "keyword": "Mass spectrometry",
+      "count": 190
+    },
+    {
+      "keyword": "Apoptosis",
+      "count": 186
+    },
+    {
+      "keyword": "aging",
+      "count": 186
+    },
+    {
+      "keyword": "Diagnosis",
+      "count": 185
+    },
+    {
+      "keyword": "prognosis",
+      "count": 182
+    },
+    {
+      "keyword": "Parkinson's disease",
+      "count": 181
+    },
+    {
+      "keyword": "children",
+      "count": 181
+    },
+    {
+      "keyword": "depression",
+      "count": 176
+    },
+    {
+      "keyword": "treatment",
+      "count": 174
+    },
+    {
+      "keyword": "mortality",
+      "count": 172
+    },
+    {
+      "keyword": "Gene expression",
+      "count": 169
+    },
+    {
+      "keyword": "Stroke",
+      "count": 162
+    },
+    {
+      "keyword": "Diabetes",
+      "count": 160
+    },
+    {
+      "keyword": "COPD",
+      "count": 159
+    },
+    {
+      "keyword": "breast cancer",
+      "count": 159
+    },
+    {
+      "keyword": "DNA methylation",
+      "count": 158
+    },
+    {
+      "keyword": "Risk factors",
+      "count": 156
+    },
+    {
+      "keyword": "diagnosis",
+      "count": 156
+    },
+    {
+      "keyword": "MRI",
+      "count": 155
+    },
+    {
+      "keyword": "Atrial fibrillation",
+      "count": 150
+    },
+    {
+      "keyword": "Biomarker",
+      "count": 150
+    }
+  ],
+  "data_completeness": {
+    "total_articles": 99849,
+    "with_abstract": 90538,
+    "with_mesh_terms": 79861,
+    "with_author_keywords": 61010,
+    "percentages": {
+      "abstract": 90.67,
+      "mesh_terms": 79.98,
+      "author_keywords": 61.1
+    }
+  }
+}

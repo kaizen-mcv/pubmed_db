@@ -1,0 +1,118 @@
+{
+  "total_unique_authors": 173512,
+  "with_hyphen": 59342,
+  "only_initials": 33795,
+  "full_name": 139717,
+  "with_spanish_particles": 2182,
+  "with_special_chars": 70804,
+  "top_20_lastnames": [
+    {
+      "lastname": "García",
+      "count": 1421
+    },
+    {
+      "lastname": "Fernández",
+      "count": 1349
+    },
+    {
+      "lastname": "Martínez",
+      "count": 1307
+    },
+    {
+      "lastname": "Moreno",
+      "count": 1193
+    },
+    {
+      "lastname": "Rodríguez",
+      "count": 1166
+    },
+    {
+      "lastname": "Sánchez",
+      "count": 1154
+    },
+    {
+      "lastname": "González",
+      "count": 1072
+    },
+    {
+      "lastname": "Alonso",
+      "count": 1034
+    },
+    {
+      "lastname": "López",
+      "count": 1020
+    },
+    {
+      "lastname": "Navarro",
+      "count": 990
+    },
+    {
+      "lastname": "Martín",
+      "count": 975
+    },
+    {
+      "lastname": "Muñoz",
+      "count": 877
+    },
+    {
+      "lastname": "Pérez",
+      "count": 874
+    },
+    {
+      "lastname": "Hernández",
+      "count": 819
+    },
+    {
+      "lastname": "Torres",
+      "count": 785
+    },
+    {
+      "lastname": "Ferrer",
+      "count": 766
+    },
+    {
+      "lastname": "Gómez",
+      "count": 764
+    },
+    {
+      "lastname": "Ruiz",
+      "count": 753
+    },
+    {
+      "lastname": "Blanco",
+      "count": 740
+    },
+    {
+      "lastname": "Sanz",
+      "count": 738
+    }
+  ],
+  "examples_hyphen": [
+    "A, Pons-Fuster",
+    "A Ramos-Arroyo, Maria",
+    "Abab-Jiménez, Zaida",
+    "Abad, José-Luis",
+    "Abad, José-Luís"
+  ],
+  "examples_initials": [
+    "A Martin, M",
+    "Aagaard Nohr, E",
+    "Aba, E",
+    "Abad, A",
+    "Abad Díaz de Cerio, A"
+  ],
+  "examples_particles": [
+    "Abad Díaz de Cerio, A",
+    "Abad-Grau, María del Mar",
+    "Abajo Del Rincón, María",
+    "Abalos-Aguilera, Maria Del Carmen",
+    "Abaurrea-Ortiz, María Del Pilar"
+  ],
+  "percentages": {
+    "with_hyphen": 34.2,
+    "only_initials": 19.48,
+    "full_name": 80.52,
+    "with_spanish_particles": 1.26,
+    "with_special_chars": 40.81
+  }
+}

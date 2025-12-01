@@ -1,0 +1,112 @@
+{
+  "top_20_authors": [
+    {
+      "author": "Valero, A",
+      "articles": 136
+    },
+    {
+      "author": "Sánchez, J",
+      "articles": 128
+    },
+    {
+      "author": "Barceló, Damià",
+      "articles": 122
+    },
+    {
+      "author": "Vieta, Eduard",
+      "articles": 121
+    },
+    {
+      "author": "García, C",
+      "articles": 120
+    },
+    {
+      "author": "Fuster, J",
+      "articles": 117
+    },
+    {
+      "author": "Ferrer, A",
+      "articles": 115
+    },
+    {
+      "author": "Torres, Antoni",
+      "articles": 115
+    },
+    {
+      "author": "Martinez, M",
+      "articles": 114
+    },
+    {
+      "author": "Lacasta, C",
+      "articles": 113
+    },
+    {
+      "author": "Vos, M",
+      "articles": 113
+    },
+    {
+      "author": "Mitsou, V A",
+      "articles": 113
+    },
+    {
+      "author": "Barreiro, F",
+      "articles": 112
+    },
+    {
+      "author": "Bosman, M",
+      "articles": 112
+    },
+    {
+      "author": "Glasman, C",
+      "articles": 112
+    },
+    {
+      "author": "Costa, M J",
+      "articles": 112
+    },
+    {
+      "author": "Higón-Rodriguez, E",
+      "articles": 112
+    },
+    {
+      "author": "Riu, I",
+      "articles": 112
+    },
+    {
+      "author": "Del Peso, J",
+      "articles": 112
+    },
+    {
+      "author": "Korolkov, I",
+      "articles": 112
+    }
+  ],
+  "distribution": [
+    {
+      "range": "1",
+      "authors": 106990
+    },
+    {
+      "range": "2-5",
+      "authors": 52926
+    },
+    {
+      "range": "6-10",
+      "authors": 8856
+    },
+    {
+      "range": "11-20",
+      "authors": 3505
+    },
+    {
+      "range": "21-50",
+      "authors": 1032
+    },
+    {
+      "range": "50+",
+      "authors": 203
+    }
+  ],
+  "one_article_authors": 106990,
+  "avg_articles_per_author": 2.39
+}

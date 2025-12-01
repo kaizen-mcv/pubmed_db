@@ -1,0 +1,149 @@
+{
+  "top_30_journals": [
+    {
+      "journal": "PloS one",
+      "articles": 2929
+    },
+    {
+      "journal": "Scientific reports",
+      "articles": 1999
+    },
+    {
+      "journal": "The Science of the total environment",
+      "articles": 1064
+    },
+    {
+      "journal": "Revista espanola de cardiologia (English ed.)",
+      "articles": 852
+    },
+    {
+      "journal": "Sensors (Basel, Switzerland)",
+      "articles": 751
+    },
+    {
+      "journal": "Food chemistry",
+      "articles": 695
+    },
+    {
+      "journal": "Chemistry (Weinheim an der Bergstrasse, Germany)",
+      "articles": 582
+    },
+    {
+      "journal": "Nature communications",
+      "articles": 553
+    },
+    {
+      "journal": "Physical review letters",
+      "articles": 552
+    },
+    {
+      "journal": "Physical chemistry chemical physics : PCCP",
+      "articles": 520
+    },
+    {
+      "journal": "Oncotarget",
+      "articles": 516
+    },
+    {
+      "journal": "Frontiers in microbiology",
+      "articles": 463
+    },
+    {
+      "journal": "Frontiers in psychology",
+      "articles": 449
+    },
+    {
+      "journal": "Talanta",
+      "articles": 383
+    },
+    {
+      "journal": "International journal of cardiology",
+      "articles": 371
+    },
+    {
+      "journal": "Methods in molecular biology (Clifton, N.J.)",
+      "articles": 362
+    },
+    {
+      "journal": "Frontiers in plant science",
+      "articles": 351
+    },
+    {
+      "journal": "Environmental science and pollution research international",
+      "articles": 348
+    },
+    {
+      "journal": "Angewandte Chemie (International ed. in English)",
+      "articles": 343
+    },
+    {
+      "journal": "Inorganic chemistry",
+      "articles": 327
+    },
+    {
+      "journal": "International journal of molecular sciences",
+      "articles": 311
+    },
+    {
+      "journal": "Chemical communications (Cambridge, England)",
+      "articles": 304
+    },
+    {
+      "journal": "Dalton transactions (Cambridge, England : 2003)",
+      "articles": 299
+    },
+    {
+      "journal": "Chemosphere",
+      "articles": 297
+    },
+    {
+      "journal": "Proceedings of the National Academy of Sciences of the United States of America",
+      "articles": 297
+    },
+    {
+      "journal": "Journal of chromatography. A",
+      "articles": 282
+    },
+    {
+      "journal": "ACS applied materials & interfaces",
+      "articles": 279
+    },
+    {
+      "journal": "Clinical & translational oncology : official publication of the Federation of Spanish Oncology Societies and of the National Cancer Institute of Mexico",
+      "articles": 270
+    },
+    {
+      "journal": "Molecules (Basel, Switzerland)",
+      "articles": 265
+    },
+    {
+      "journal": "Journal of the American Chemical Society",
+      "articles": 253
+    }
+  ],
+  "unique_journals": 5397,
+  "with_issn": 99840,
+  "without_issn": 9,
+  "distribution": [
+    {
+      "range": "1 artículo",
+      "journals": 1039
+    },
+    {
+      "range": "2-5 artículos",
+      "journals": 1563
+    },
+    {
+      "range": "6-20 artículos",
+      "journals": 1615
+    },
+    {
+      "range": "21-50 artículos",
+      "journals": 798
+    },
+    {
+      "range": "50+ artículos",
+      "journals": 382
+    }
+  ]
+}

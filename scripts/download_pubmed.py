@@ -143,11 +143,13 @@ class PubMedDownloader:
 
         # Construir query
         search_config = self.config.get('search', {})
-        query = search_config.get('query', 'Spain[Affiliation]')
+        base_query = search_config.get('query', 'Spain[Affiliation]')
 
         date_from = search_config.get('date_from')
         date_to = search_config.get('date_to')
 
+        # Query completa para logging
+        query = base_query
         if date_from or date_to:
             query += f" AND {date_from or '1900'}:{date_to or '2100'}[PDAT]"
 
@@ -160,8 +162,10 @@ class PubMedDownloader:
         self.logger.info("Obteniendo lista de PMIDs...")
         all_pmids = self.downloader.search_all_pmids(
             query,
-            batch_size=batch_config.get('search_batch_size', 10000),
+            batch_size=batch_config.get('search_batch_size', 9999),
             max_results=max_articles,
+            date_from=date_from,
+            date_to=date_to,
         )
 
         if not all_pmids:

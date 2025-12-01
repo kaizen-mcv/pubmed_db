@@ -1,0 +1,210 @@
+{
+  "top_30_affiliations": [
+    {
+      "affiliation": "Instituto de Física Corpuscular (IFIC) and Departamento de Física Atómica, Molecular y Nuclear and Departamento de Ingeniería Electrónica and Instituto de Microelectrónica de Barcelona (IMB-CNM), Univ",
+      "count": 2090
+    },
+    {
+      "affiliation": "Institut de Física d'Altes Energies (IFAE), The Barcelona Institute of Science and Technology, Barcelona, Spain.",
+      "count": 1596
+    },
+    {
+      "affiliation": "Centro de Investigaciones Energéticas Medioambientales y Tecnológicas (CIEMAT), Madrid, Spain.",
+      "count": 1445
+    },
+    {
+      "affiliation": "Institut de Física d'Altes Energies and Departament de Física de la Universitat Autònoma de Barcelona, Barcelona, Spain.",
+      "count": 1427
+    },
+    {
+      "affiliation": "Instituto de Fisica Corpuscular (IFIC) and Departamento de Fisica Atomica, Molecular y Nuclear and Departamento de Ingeniería Electrónica and Instituto de Microelectrónica de Barcelona (IMB-CNM), Univ",
+      "count": 1130
+    },
+    {
+      "affiliation": "Instituto de Física de Cantabria (IFCA), CSIC-Universidad de Cantabria, Santander, Spain.",
+      "count": 1040
+    },
+    {
+      "affiliation": "Departamento de Fisica Teorica C-15, Universidad Autonoma de Madrid, Madrid, Spain.",
+      "count": 797
+    },
+    {
+      "affiliation": "Spain.",
+      "count": 766
+    },
+    {
+      "affiliation": "Universidad de Oviedo, Oviedo, Spain.",
+      "count": 484
+    },
+    {
+      "affiliation": "Departamento de Fisica Teorica y del Cosmos and CAFPE, Universidad de Granada, Granada, Spain",
+      "count": 337
+    },
+    {
+      "affiliation": "Instituto de Física de Cantabria (IFCA), CSIC-Universidad de Cantabria, Santander, Spain.",
+      "count": 318
+    },
+    {
+      "affiliation": "ICCUB, Universitat de Barcelona, Barcelona, Spain.",
+      "count": 309
+    },
+    {
+      "affiliation": "Centro de Investigaciones Energéticas Medioambientales y Tecnológicas (CIEMAT), Madrid, Spain.",
+      "count": 292
+    },
+    {
+      "affiliation": "Universitat de Barcelona, Barcelona, Spain.",
+      "count": 290
+    },
+    {
+      "affiliation": "Universidad Autónoma de Madrid, Madrid, Spain.",
+      "count": 280
+    },
+    {
+      "affiliation": "Instituto de Fisica Corpuscular (IFIC), Centro Mixto Universidad de Valencia-CSIC, Valencia, Spain.",
+      "count": 201
+    },
+    {
+      "affiliation": "Instituto de Fisica Corpuscular (IFIC), Centro Mixto Universidad de Valencia - CSIC, Valencia, Spain.",
+      "count": 198
+    },
+    {
+      "affiliation": "Spain..",
+      "count": 184
+    },
+    {
+      "affiliation": "Ana Osorio, National Cancer Research Centre and Spanish Network on Rare Diseases; Angel Izquierdo, Esther Darder, and Joan Brunet, Institut d'Investigació Biomèdica de Girona, Catalan Institute of Onc",
+      "count": 177
+    },
+    {
+      "affiliation": "Barcelona, Spain.",
+      "count": 158
+    },
+    {
+      "affiliation": "Països Catalans 16, 43007, Tarragona, Spain.",
+      "count": 155
+    },
+    {
+      "affiliation": "Health Res. (CRESIB), Hospital Clínic - Universitat de Barcelona, Barcelona, Spain.",
+      "count": 144
+    },
+    {
+      "affiliation": "Madrid, Spain.",
+      "count": 141
+    },
+    {
+      "affiliation": "Països Catalans 16, 43007 Tarragona, Spain.",
+      "count": 123
+    },
+    {
+      "affiliation": "Box 644, 48080 Bilbao, Spain.",
+      "count": 121
+    },
+    {
+      "affiliation": "Departamento de Fisica Teorica y del Cosmos and CAFPE, Universidad de Granada, Granada, Spain.",
+      "count": 113
+    },
+    {
+      "affiliation": "Health Res. (CRESIB), Hospital Clínic-Universitat de Barcelona, Barcelona, Spain.",
+      "count": 103
+    },
+    {
+      "affiliation": "Department of Pediatric Surgery, Hospital Universitario La Paz, Madrid, Spain.",
+      "count": 98
+    },
+    {
+      "affiliation": "Institut d'Investigacions Biomèdiques August Pi i Sunyer (IDIBAPS), Barcelona, Spain.",
+      "count": 96
+    },
+    {
+      "affiliation": "Hospital Universitario La Paz, Madrid, Spain.",
+      "count": 92
+    }
+  ],
+  "geographic_distribution": [
+    {
+      "city": "Madrid",
+      "articles": 29442
+    },
+    {
+      "city": "Barcelona",
+      "articles": 29056
+    },
+    {
+      "city": "Valencia",
+      "articles": 8470
+    },
+    {
+      "city": "Granada",
+      "articles": 4778
+    },
+    {
+      "city": "Murcia",
+      "articles": 3714
+    },
+    {
+      "city": "Sevilla",
+      "articles": 3479
+    },
+    {
+      "city": "Zaragoza",
+      "articles": 3406
+    },
+    {
+      "city": "Pamplona",
+      "articles": 2986
+    },
+    {
+      "city": "Oviedo",
+      "articles": 2511
+    },
+    {
+      "city": "Bilbao",
+      "articles": 2338
+    },
+    {
+      "city": "Alicante",
+      "articles": 2293
+    },
+    {
+      "city": "Málaga",
+      "articles": 1881
+    },
+    {
+      "city": "Salamanca",
+      "articles": 1880
+    },
+    {
+      "city": "Córdoba",
+      "articles": 1725
+    },
+    {
+      "city": "Santander",
+      "articles": 1658
+    },
+    {
+      "city": "Vigo",
+      "articles": 1642
+    },
+    {
+      "city": "Valladolid",
+      "articles": 1553
+    },
+    {
+      "city": "San Sebastián",
+      "articles": 1281
+    },
+    {
+      "city": "La Coruña",
+      "articles": 295
+    }
+  ],
+  "ciber_articles": 12408,
+  "university_articles": 63586,
+  "hospital_articles": 35752,
+  "percentages": {
+    "ciber": 12.43,
+    "university": 63.68,
+    "hospital": 35.81
+  }
+}

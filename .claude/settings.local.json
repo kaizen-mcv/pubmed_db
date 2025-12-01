@@ -6,7 +6,9 @@
       "Bash(source:*)",
       "Bash(pytest:*)",
       "Bash(pip install:*)",
-      "Bash(python scripts/download_pubmed.py:*)"
+      "Bash(python scripts/download_pubmed.py:*)",
+      "Bash(python scripts/statistics.py:*)",
+      "Bash(python scripts/import_mesh_terms.py:*)"
     ],
     "deny": [],
     "ask": []

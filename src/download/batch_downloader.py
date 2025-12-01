@@ -313,36 +313,59 @@ class PubMedBatchDownloader:
     def search_all_pmids(
         self,
         query: str,
-        batch_size: int = 10000,
+        batch_size: int = 9999,
         max_results: Optional[int] = None,
+        date_from: Optional[str] = None,
+        date_to: Optional[str] = None,
     ) -> List[int]:
         """
         Busca TODOS los PMIDs que coinciden con una query.
 
-        Usa paginación para queries grandes (>10,000 resultados).
+        NOTA: PubMed ESearch tiene un límite de 9,999 resultados por búsqueda.
+        Para queries grandes, este método divide automáticamente por períodos
+        de tiempo (meses) para obtener todos los resultados.
 
         Args:
             query: Query de búsqueda
-            batch_size: Tamaño de cada página (max 10,000)
+            batch_size: Tamaño de cada página (max 9,999 por límite de PubMed)
             max_results: Máximo de resultados (None = sin límite)
+            date_from: Fecha inicio formato YYYY/MM/DD (para subdivisión)
+            date_to: Fecha fin formato YYYY/MM/DD (para subdivisión)
 
         Returns:
             Lista completa de PMIDs
         """
+        # Límite de PubMed ESearch
+        PUBMED_MAX_RESULTS = 9999
+
         # Obtener conteo total
         total_count = self.get_total_count(query)
         print(f"Total de artículos encontrados: {total_count:,}")
 
+        target_count = total_count
         if max_results:
-            total_count = min(total_count, max_results)
-            print(f"Limitado a: {total_count:,}")
+            target_count = min(total_count, max_results)
+            print(f"Limitado a: {target_count:,}")
+
+        # Si hay más de 9999 resultados, necesitamos dividir por períodos
+        if total_count > PUBMED_MAX_RESULTS:
+            print(f"⚠ Query supera límite de {PUBMED_MAX_RESULTS:,} de PubMed. Dividiendo por períodos...")
+            # Extraer query base (sin fechas) para subdivisión
+            base_query = query.split(" AND ")[0] if " AND " in query and "[PDAT]" in query else query
+            return self._search_by_time_periods(
+                base_query,
+                max_results=max_results,
+                date_from=date_from,
+                date_to=date_to
+            )
 
         all_pmids = []
         retstart = 0
+        batch_size = min(batch_size, PUBMED_MAX_RESULTS)
 
-        while retstart < total_count:
+        while retstart < target_count:
             # Calcular tamaño del siguiente lote
-            remaining = total_count - retstart
+            remaining = target_count - retstart
             current_batch = min(batch_size, remaining)
 
             print(f"Obteniendo PMIDs {retstart:,} a {retstart + current_batch:,}...", end=" ")
@@ -360,3 +383,100 @@ class PubMedBatchDownloader:
 
         print(f"\nTotal PMIDs obtenidos: {len(all_pmids):,}")
         return all_pmids
+
+    def _search_by_time_periods(
+        self,
+        base_query: str,
+        max_results: Optional[int] = None,
+        date_from: Optional[str] = None,
+        date_to: Optional[str] = None,
+    ) -> List[int]:
+        """
+        Divide búsquedas grandes en períodos de tiempo para evitar el límite de 9999.
+
+        Estrategia: Buscar por meses. Si un mes tiene >9999, buscar por días.
+        """
+        from datetime import datetime, timedelta
+
+        PUBMED_MAX_RESULTS = 9999
+
+        # Parsear fechas
+        if date_from:
+            start = datetime.strptime(date_from.replace("/", "-"), "%Y-%m-%d")
+        else:
+            start = datetime(1900, 1, 1)
+
+        if date_to:
+            end = datetime.strptime(date_to.replace("/", "-"), "%Y-%m-%d")
+        else:
+            end = datetime.now()
+
+        all_pmids = set()  # Usar set para evitar duplicados
+        current = start
+
+        print(f"Buscando desde {start.strftime('%Y/%m/%d')} hasta {end.strftime('%Y/%m/%d')}...")
+
+        while current <= end:
+            if max_results and len(all_pmids) >= max_results:
+                break
+
+            # Intentar por mes primero
+            month_end = (current.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
+            if month_end > end:
+                month_end = end
+
+            period_query = f"{base_query} AND {current.strftime('%Y/%m/%d')}:{month_end.strftime('%Y/%m/%d')}[PDAT]"
+            count = self.get_total_count(period_query)
+
+            if count == 0:
+                print(f"  {current.strftime('%Y/%m')}: 0 artículos")
+                current = month_end + timedelta(days=1)
+                continue
+
+            if count <= PUBMED_MAX_RESULTS:
+                # El mes cabe en una búsqueda
+                print(f"  {current.strftime('%Y/%m')}: {count:,} artículos...", end=" ")
+                pmids = self.search_pmids(period_query, retmax=PUBMED_MAX_RESULTS)
+                if pmids:
+                    all_pmids.update(pmids)
+                    print(f"✓")
+                else:
+                    print(f"✗ Error")
+                current = month_end + timedelta(days=1)
+            else:
+                # Mes muy grande, buscar por días
+                print(f"  {current.strftime('%Y/%m')}: {count:,} artículos (dividiendo por días)...")
+                day_current = current
+                while day_current <= month_end:
+                    if max_results and len(all_pmids) >= max_results:
+                        break
+
+                    day_query = f"{base_query} AND {day_current.strftime('%Y/%m/%d')}[PDAT]"
+                    day_count = self.get_total_count(day_query)
+
+                    if day_count > 0:
+                        print(f"    {day_current.strftime('%Y/%m/%d')}: {day_count:,}...", end=" ")
+                        if day_count <= PUBMED_MAX_RESULTS:
+                            pmids = self.search_pmids(day_query, retmax=PUBMED_MAX_RESULTS)
+                            if pmids:
+                                all_pmids.update(pmids)
+                                print(f"✓")
+                            else:
+                                print(f"✗ Error")
+                        else:
+                            # Incluso un día tiene más de 9999 (muy raro)
+                            print(f"⚠ Demasiados artículos en un día, obteniendo primeros {PUBMED_MAX_RESULTS}")
+                            pmids = self.search_pmids(day_query, retmax=PUBMED_MAX_RESULTS)
+                            if pmids:
+                                all_pmids.update(pmids)
+
+                    day_current += timedelta(days=1)
+
+                current = month_end + timedelta(days=1)
+
+        result = list(all_pmids)
+        if max_results:
+            result = result[:max_results]
+
+        print(f"\nTotal PMIDs obtenidos: {len(result):,}")
+        return result
