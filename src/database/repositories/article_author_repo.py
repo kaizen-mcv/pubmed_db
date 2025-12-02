@@ -1,7 +1,7 @@
 """
 Repositorio de autores de artículos.
 
-CRUD para la tabla article_authors.
+CRUD para la tabla pubmed_authors.
 """
 
 from typing import List
@@ -34,7 +34,7 @@ class ArticleAuthorRepository:
             ID del registro insertado
         """
         cur.execute("""
-            INSERT INTO article_authors (
+            INSERT INTO pubmed_authors (
                 pubmed_id,
                 author_name,
                 author_position,
@@ -87,7 +87,7 @@ class ArticleAuthorRepository:
             Número de registros eliminados
         """
         cur.execute(
-            "DELETE FROM article_authors WHERE pubmed_id = %s",
+            "DELETE FROM pubmed_authors WHERE pubmed_id = %s",
             (pubmed_id,)
         )
         return cur.rowcount
@@ -103,5 +103,5 @@ class ArticleAuthorRepository:
         Returns:
             Número total de registros
         """
-        cur.execute("SELECT COUNT(*) FROM article_authors")
+        cur.execute("SELECT COUNT(*) FROM pubmed_authors")
         return cur.fetchone()[0]

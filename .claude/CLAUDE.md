@@ -61,7 +61,7 @@ pubmed/
 
 ## Esquema de Base de Datos (2 tablas)
 
-### Tabla: `articles`
+### Tabla: `pubmed_articles`
 
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
@@ -77,7 +77,7 @@ pubmed/
 | `author_keywords` | TEXT | Palabras clave del autor |
 | `created_at` | TIMESTAMP | Fecha de inserción |
 
-### Tabla: `article_authors`
+### Tabla: `pubmed_authors`
 
 Solo se guardan autores con afiliación española.
 
@@ -177,7 +177,7 @@ PubMed API (Entrez)
          │
          ▼
 ┌─────────────────┐
-│   PostgreSQL    │ ← 2 tablas: articles + article_authors
+│   PostgreSQL    │ ← 2 tablas: pubmed_articles + pubmed_authors
 └─────────────────┘
 ```
 
@@ -198,23 +198,23 @@ El módulo `rate_limiter.py` gestiona esto automáticamente.
 ```sql
 -- Todos los autores españoles únicos
 SELECT DISTINCT author_name, author_orcid
-FROM article_authors;
+FROM pubmed_authors;
 
 -- Artículos por tipo de publicación
 SELECT publication_types, COUNT(*)
-FROM articles
+FROM pubmed_articles
 GROUP BY publication_types;
 
 -- Autores con ORCID
 SELECT author_name, author_orcid, COUNT(*) as articulos
-FROM article_authors
+FROM pubmed_authors
 WHERE author_orcid IS NOT NULL
 GROUP BY author_name, author_orcid
 ORDER BY articulos DESC;
 
 -- Artículos de un autor específico
 SELECT a.*
-FROM articles a
-JOIN article_authors aa ON a.pubmed_id = aa.pubmed_id
+FROM pubmed_articles a
+JOIN pubmed_authors aa ON a.pubmed_id = aa.pubmed_id
 WHERE aa.author_name LIKE 'García%';
 ```

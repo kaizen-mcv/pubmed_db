@@ -1,7 +1,7 @@
 """
 Repositorio de artículos.
 
-CRUD para la tabla articles (esquema simplificado).
+CRUD para la tabla pubmed_articles (esquema simplificado).
 """
 
 from typing import Optional
@@ -33,7 +33,7 @@ class ArticleRepository:
             pubmed_id del artículo
         """
         cur.execute("""
-            INSERT INTO articles (
+            INSERT INTO pubmed_articles (
                 pubmed_id,
                 article_title,
                 article_abstract,
@@ -85,7 +85,7 @@ class ArticleRepository:
             True si existe
         """
         cur.execute(
-            "SELECT 1 FROM articles WHERE pubmed_id = %s",
+            "SELECT 1 FROM pubmed_articles WHERE pubmed_id = %s",
             (pubmed_id,)
         )
         return cur.fetchone() is not None
@@ -101,5 +101,5 @@ class ArticleRepository:
         Returns:
             Número total de artículos
         """
-        cur.execute("SELECT COUNT(*) FROM articles")
+        cur.execute("SELECT COUNT(*) FROM pubmed_articles")
         return cur.fetchone()[0]

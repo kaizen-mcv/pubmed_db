@@ -9,7 +9,7 @@ DROP TABLE IF EXISTS mesh_to_snomed CASCADE;
 CREATE TABLE mesh_to_snomed (
     id SERIAL PRIMARY KEY,
     mesh_tree_prefix VARCHAR(20) NOT NULL,           -- Prefijo del tree number (ej: "C14", "C14.280")
-    snomed_code VARCHAR(20) NOT NULL REFERENCES medical_specialties(snomed_code),
+    snomed_code VARCHAR(20) NOT NULL REFERENCES snomed_specialties(snomed_code),
     description VARCHAR(200),                         -- Descripción de la categoría MeSH
     confidence DECIMAL(3,2) DEFAULT 0.90,            -- Confianza del mapeo (0.00-1.00)
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -236,7 +236,7 @@ BEGIN
         ms.name_es::VARCHAR,
         m.confidence
     FROM mesh_to_snomed m
-    JOIN medical_specialties ms ON m.snomed_code = ms.snomed_code
+    JOIN snomed_specialties ms ON m.snomed_code = ms.snomed_code
     WHERE tree_number LIKE m.mesh_tree_prefix || '%'
     ORDER BY LENGTH(m.mesh_tree_prefix) DESC, m.confidence DESC;
 END;

@@ -3,10 +3,10 @@
 -- Fuente MIR España: https://fse.mscbs.gob.es/fseweb/
 
 -- Eliminar tabla existente
-DROP TABLE IF EXISTS medical_specialties;
+DROP TABLE IF EXISTS snomed_specialties;
 
 -- Crear tabla con estructura SNOMED CT
-CREATE TABLE medical_specialties (
+CREATE TABLE snomed_specialties (
     id SERIAL PRIMARY KEY,
     snomed_code VARCHAR(20) UNIQUE NOT NULL,
     name_en VARCHAR(200) NOT NULL,
@@ -18,7 +18,7 @@ CREATE TABLE medical_specialties (
 -- Insertar TODAS las especialidades SNOMED CT (~137)
 -- Las que tienen name_es y is_mir_spain=TRUE son especialidades MIR españolas
 
-INSERT INTO medical_specialties (snomed_code, name_en, name_es, is_mir_spain) VALUES
+INSERT INTO snomed_specialties (snomed_code, name_en, name_es, is_mir_spain) VALUES
 -- Especialidades MIR España (46)
 ('408439002', 'Allergy', 'Alergología', TRUE),
 ('394577000', 'Anesthetics', 'Anestesiología y Reanimación', TRUE),
@@ -141,7 +141,7 @@ INSERT INTO medical_specialties (snomed_code, name_en, name_es, is_mir_spain) VA
 ('394732004', 'Surgical specialty (OTHER)', NULL, FALSE);
 
 -- Crear índice para búsquedas por código SNOMED
-CREATE INDEX idx_medical_specialties_snomed ON medical_specialties(snomed_code);
+CREATE INDEX idx_snomed_specialties_snomed ON snomed_specialties(snomed_code);
 
 -- Crear índice para filtrar especialidades españolas
-CREATE INDEX idx_medical_specialties_mir ON medical_specialties(is_mir_spain);
+CREATE INDEX idx_snomed_specialties_mir ON snomed_specialties(is_mir_spain);
