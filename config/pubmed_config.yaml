@@ -28,6 +28,9 @@ batch:
   # Tiempo de espera entre reintentos (segundos)
   retry_delay: 5
 
+  # Pausa entre lotes (segundos) - margen de seguridad extra
+  batch_delay: 30
+
 # === CONFIGURACIÓN DE DESCARGA ===
 download:
   # Email requerido por NCBI (cambiar por el tuyo)

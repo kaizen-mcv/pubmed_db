@@ -21,6 +21,7 @@ import os
 import argparse
 import logging
 import signal
+import time
 from datetime import datetime
 from pathlib import Path
 
@@ -91,6 +92,9 @@ class PubMedDownloader:
         self.commit_frequency = self.config.get('database_config', {}).get(
             'commit_frequency', 50
         )
+
+        # Delay entre lotes (margen de seguridad)
+        self.batch_delay = batch_config.get('batch_delay', 30)
 
         # Control de interrupción
         self.interrupted = False
@@ -287,6 +291,11 @@ class PubMedDownloader:
                     f"Progreso: {progress.get('percent_complete', 0):.1f}% "
                     f"({progress['downloaded']:,}/{total:,})"
                 )
+
+                # Pausa entre lotes para no saturar NCBI
+                if not self.interrupted and i + batch_size < len(pmids):
+                    self.logger.debug(f"Esperando {self.batch_delay}s antes del siguiente lote...")
+                    time.sleep(self.batch_delay)
 
         except Exception as e:
             self.logger.error(f"Error durante descarga: {e}", exc_info=True)
