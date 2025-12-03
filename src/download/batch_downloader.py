@@ -12,13 +12,18 @@ Cumple estrictamente con políticas de NCBI:
 import sys
 import os
 import time
+import logging
 from typing import List, Optional, Dict, Any
 from Bio import Entrez
 from urllib.error import HTTPError
 
 # Importar módulos del proyecto
 sys.path.insert(0, os.path.dirname(__file__))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 from rate_limiter import AdaptiveRateLimiter
+
+# Logger del módulo
+logger = logging.getLogger(__name__)
 
 
 class PubMedBatchDownloader:
@@ -107,12 +112,12 @@ class PubMedBatchDownloader:
                 if e.code == 429:
                     # Too many requests
                     self.rate_limiter.handle_429_error()
-                    print(f"⚠ Rate limit excedido, reduciendo velocidad...")
+                    logger.warning("Rate limit excedido, reduciendo velocidad...")
                     continue
 
                 if attempt < self.max_retries - 1:
                     wait_time = self.retry_delay * (2 ** attempt)
-                    print(f"⚠ Error HTTP {e.code}, reintentando en {wait_time}s...")
+                    logger.warning(f"Error HTTP {e.code}, reintentando en {wait_time}s...")
                     time.sleep(wait_time)
                 else:
                     raise
@@ -120,7 +125,7 @@ class PubMedBatchDownloader:
             except Exception as e:
                 if attempt < self.max_retries - 1:
                     wait_time = self.retry_delay * (2 ** attempt)
-                    print(f"⚠ Error en búsqueda: {e}, reintentando en {wait_time}s...")
+                    logger.warning(f"Error en búsqueda: {e}, reintentando en {wait_time}s...")
                     time.sleep(wait_time)
                 else:
                     raise
@@ -172,29 +177,29 @@ class PubMedBatchDownloader:
                 if e.code == 429:
                     # Too many requests
                     self.rate_limiter.handle_429_error()
-                    print(f"⚠ Rate limit excedido, reduciendo velocidad...")
+                    logger.warning("Rate limit excedido, reduciendo velocidad...")
                     continue
 
                 if e.code == 400:
                     # Bad request, no reintentar
-                    print(f"✗ Error 400 para PMIDs: {pmids[:5]}... (request inválido)")
+                    logger.error(f"Error 400 para PMIDs: {pmids[:5]}... (request inválido)")
                     return None
 
                 if attempt < self.max_retries - 1:
                     wait_time = self.retry_delay * (2 ** attempt)
-                    print(f"⚠ Error HTTP {e.code}, reintentando en {wait_time}s...")
+                    logger.warning(f"Error HTTP {e.code}, reintentando en {wait_time}s...")
                     time.sleep(wait_time)
                 else:
-                    print(f"✗ Error HTTP {e.code} tras {self.max_retries} intentos")
+                    logger.error(f"Error HTTP {e.code} tras {self.max_retries} intentos")
                     return None
 
             except Exception as e:
                 if attempt < self.max_retries - 1:
                     wait_time = self.retry_delay * (2 ** attempt)
-                    print(f"⚠ Error en fetch: {e}, reintentando en {wait_time}s...")
+                    logger.warning(f"Error en fetch: {e}, reintentando en {wait_time}s...")
                     time.sleep(wait_time)
                 else:
-                    print(f"✗ Error tras {self.max_retries} intentos: {e}")
+                    logger.error(f"Error tras {self.max_retries} intentos: {e}")
                     return None
 
         return None
@@ -245,14 +250,14 @@ class PubMedBatchDownloader:
         downloaded = 0
         failed = 0
 
-        print(f"Descargando {total:,} artículos en lotes de {batch_size}...")
+        logger.info(f"Descargando {total:,} artículos en lotes de {batch_size}...")
 
         for i in range(0, total, batch_size):
             batch = pmids[i : i + batch_size]
             batch_num = i // batch_size + 1
             total_batches = (total + batch_size - 1) // batch_size
 
-            print(f"\nLote {batch_num}/{total_batches} ({len(batch)} PMIDs)...", end=" ")
+            logger.info(f"Lote {batch_num}/{total_batches} ({len(batch)} PMIDs)...")
 
             records = self.fetch_batch(batch)
 
@@ -265,12 +270,12 @@ class PubMedBatchDownloader:
                             callback(article)
                         downloaded += 1
                     except Exception as e:
-                        print(f"\n  ✗ Error procesando artículo: {e}")
+                        logger.error(f"Error procesando artículo: {e}")
                         failed += 1
 
-                print(f"✓ {len(articles)} artículos")
+                logger.debug(f"Lote {batch_num}: {len(articles)} artículos descargados")
             else:
-                print(f"✗ Lote falló")
+                logger.warning(f"Lote {batch_num} falló")
                 failed += len(batch)
 
         # Estadísticas finales
@@ -307,7 +312,7 @@ class PubMedBatchDownloader:
             return int(record["Count"])
 
         except Exception as e:
-            print(f"✗ Error obteniendo conteo: {e}")
+            logger.error(f"Error obteniendo conteo: {e}")
             return 0
 
     def search_all_pmids(
@@ -340,16 +345,16 @@ class PubMedBatchDownloader:
 
         # Obtener conteo total
         total_count = self.get_total_count(query)
-        print(f"Total de artículos encontrados: {total_count:,}")
+        logger.info(f"Total de artículos encontrados: {total_count:,}")
 
         target_count = total_count
         if max_results:
             target_count = min(total_count, max_results)
-            print(f"Limitado a: {target_count:,}")
+            logger.info(f"Limitado a: {target_count:,}")
 
         # Si hay más de 9999 resultados, necesitamos dividir por períodos
         if total_count > PUBMED_MAX_RESULTS:
-            print(f"⚠ Query supera límite de {PUBMED_MAX_RESULTS:,} de PubMed. Dividiendo por períodos...")
+            logger.warning(f"Query supera límite de {PUBMED_MAX_RESULTS:,} de PubMed. Dividiendo por períodos...")
             # Extraer query base (sin fechas) para subdivisión
             base_query = query.split(" AND ")[0] if " AND " in query and "[PDAT]" in query else query
             return self._search_by_time_periods(
@@ -368,20 +373,20 @@ class PubMedBatchDownloader:
             remaining = target_count - retstart
             current_batch = min(batch_size, remaining)
 
-            print(f"Obteniendo PMIDs {retstart:,} a {retstart + current_batch:,}...", end=" ")
+            logger.debug(f"Obteniendo PMIDs {retstart:,} a {retstart + current_batch:,}...")
 
             pmids = self.search_pmids(query, retmax=current_batch, retstart=retstart)
 
             if not pmids:
-                print("✗ Error en búsqueda")
+                logger.error("Error en búsqueda")
                 break
 
             all_pmids.extend(pmids)
-            print(f"✓ {len(pmids)} PMIDs")
+            logger.debug(f"Obtenidos {len(pmids)} PMIDs")
 
             retstart += current_batch
 
-        print(f"\nTotal PMIDs obtenidos: {len(all_pmids):,}")
+        logger.info(f"Total PMIDs obtenidos: {len(all_pmids):,}")
         return all_pmids
 
     def _search_by_time_periods(
@@ -414,7 +419,7 @@ class PubMedBatchDownloader:
         all_pmids = set()  # Usar set para evitar duplicados
         current = start
 
-        print(f"Buscando desde {start.strftime('%Y/%m/%d')} hasta {end.strftime('%Y/%m/%d')}...")
+        logger.info(f"Buscando desde {start.strftime('%Y/%m/%d')} hasta {end.strftime('%Y/%m/%d')}...")
 
         while current <= end:
             if max_results and len(all_pmids) >= max_results:
@@ -429,23 +434,23 @@ class PubMedBatchDownloader:
             count = self.get_total_count(period_query)
 
             if count == 0:
-                print(f"  {current.strftime('%Y/%m')}: 0 artículos")
+                logger.debug(f"{current.strftime('%Y/%m')}: 0 artículos")
                 current = month_end + timedelta(days=1)
                 continue
 
             if count <= PUBMED_MAX_RESULTS:
                 # El mes cabe en una búsqueda
-                print(f"  {current.strftime('%Y/%m')}: {count:,} artículos...", end=" ")
+                logger.debug(f"{current.strftime('%Y/%m')}: {count:,} artículos...")
                 pmids = self.search_pmids(period_query, retmax=PUBMED_MAX_RESULTS)
                 if pmids:
                     all_pmids.update(pmids)
-                    print(f"✓")
+                    logger.debug(f"{current.strftime('%Y/%m')}: OK")
                 else:
-                    print(f"✗ Error")
+                    logger.warning(f"{current.strftime('%Y/%m')}: Error")
                 current = month_end + timedelta(days=1)
             else:
                 # Mes muy grande, buscar por días
-                print(f"  {current.strftime('%Y/%m')}: {count:,} artículos (dividiendo por días)...")
+                logger.info(f"{current.strftime('%Y/%m')}: {count:,} artículos (dividiendo por días)...")
                 day_current = current
                 while day_current <= month_end:
                     if max_results and len(all_pmids) >= max_results:
@@ -455,17 +460,16 @@ class PubMedBatchDownloader:
                     day_count = self.get_total_count(day_query)
 
                     if day_count > 0:
-                        print(f"    {day_current.strftime('%Y/%m/%d')}: {day_count:,}...", end=" ")
+                        logger.debug(f"{day_current.strftime('%Y/%m/%d')}: {day_count:,}...")
                         if day_count <= PUBMED_MAX_RESULTS:
                             pmids = self.search_pmids(day_query, retmax=PUBMED_MAX_RESULTS)
                             if pmids:
                                 all_pmids.update(pmids)
-                                print(f"✓")
                             else:
-                                print(f"✗ Error")
+                                logger.warning(f"{day_current.strftime('%Y/%m/%d')}: Error")
                         else:
                             # Incluso un día tiene más de 9999 (muy raro)
-                            print(f"⚠ Demasiados artículos en un día, obteniendo primeros {PUBMED_MAX_RESULTS}")
+                            logger.warning(f"Demasiados artículos en un día ({day_count}), obteniendo primeros {PUBMED_MAX_RESULTS}")
                             pmids = self.search_pmids(day_query, retmax=PUBMED_MAX_RESULTS)
                             if pmids:
                                 all_pmids.update(pmids)
@@ -478,5 +482,5 @@ class PubMedBatchDownloader:
         if max_results:
             result = result[:max_results]
 
-        print(f"\nTotal PMIDs obtenidos: {len(result):,}")
+        logger.info(f"Total PMIDs obtenidos: {len(result):,}")
         return result

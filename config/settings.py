@@ -66,16 +66,24 @@ class Settings:
         """
         Retorna parámetros de conexión para psycopg2.
 
+        Lee primero de variables de entorno, luego del archivo YAML como fallback.
+
+        Variables de entorno:
+            PUBMED_DB_HOST, PUBMED_DB_PORT, PUBMED_DB_NAME,
+            PUBMED_DB_USER, PUBMED_DB_PASSWORD
+
         Returns:
             Dict con host, port, dbname, user, password
         """
         db = self.database.get('database', {})
+
+        # Leer de variables de entorno con fallback a YAML
         return {
-            'host': db.get('host', 'localhost'),
-            'port': db.get('port', 5432),
-            'dbname': db.get('name', 'pubmed_db'),
-            'user': db.get('user', 'pubmed_user'),
-            'password': db.get('password', ''),
+            'host': os.environ.get('PUBMED_DB_HOST', db.get('host', 'localhost')),
+            'port': int(os.environ.get('PUBMED_DB_PORT', db.get('port', 5432))),
+            'dbname': os.environ.get('PUBMED_DB_NAME', db.get('name', 'pubmed_db')),
+            'user': os.environ.get('PUBMED_DB_USER', db.get('user', 'pubmed_user')),
+            'password': os.environ.get('PUBMED_DB_PASSWORD', db.get('password', '')),
         }
 
     def get_rate_limit_params(self) -> Dict[str, Any]:

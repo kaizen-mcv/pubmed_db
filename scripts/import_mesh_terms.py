@@ -100,11 +100,11 @@ def parse_single_record(raw_record: str) -> dict:
 
 
 def create_table(cursor):
-    """Crea la tabla mesh_terms si no existe."""
+    """Crea la tabla nlm_mesh_terms si no existe."""
     cursor.execute("""
-        DROP TABLE IF EXISTS mesh_terms CASCADE;
+        DROP TABLE IF EXISTS nlm_mesh_terms CASCADE;
 
-        CREATE TABLE mesh_terms (
+        CREATE TABLE nlm_mesh_terms (
             id SERIAL PRIMARY KEY,
             mesh_ui VARCHAR(20) UNIQUE NOT NULL,
             mesh_name VARCHAR(500) NOT NULL,
@@ -114,9 +114,11 @@ def create_table(cursor):
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
 
-        CREATE INDEX idx_mesh_ui ON mesh_terms(mesh_ui);
-        CREATE INDEX idx_mesh_name ON mesh_terms(mesh_name);
-        CREATE INDEX idx_mesh_category ON mesh_terms(parent_category);
+        CREATE INDEX idx_nlm_mesh_ui ON nlm_mesh_terms(mesh_ui);
+        CREATE INDEX idx_nlm_mesh_name ON nlm_mesh_terms(mesh_name);
+        CREATE INDEX idx_nlm_mesh_category ON nlm_mesh_terms(parent_category);
+
+        COMMENT ON TABLE nlm_mesh_terms IS 'Términos MeSH de la National Library of Medicine (NLM)';
     """)
 
 
@@ -134,7 +136,7 @@ def import_to_db(records: list, db_config: dict):
         cursor = conn.cursor()
 
         # Crear tabla
-        print("Creando tabla mesh_terms...")
+        print("Creando tabla nlm_mesh_terms...")
         create_table(cursor)
         conn.commit()
 
@@ -148,7 +150,7 @@ def import_to_db(records: list, db_config: dict):
 
             for record in batch:
                 cursor.execute("""
-                    INSERT INTO mesh_terms (mesh_ui, mesh_name, tree_numbers, parent_category, year_introduced)
+                    INSERT INTO nlm_mesh_terms (mesh_ui, mesh_name, tree_numbers, parent_category, year_introduced)
                     VALUES (%s, %s, %s, %s, %s)
                     ON CONFLICT (mesh_ui) DO NOTHING
                 """, (
@@ -164,14 +166,14 @@ def import_to_db(records: list, db_config: dict):
             print(f"  Insertados: {inserted:,} / {len(records):,}")
 
         # Verificar
-        cursor.execute("SELECT COUNT(*) FROM mesh_terms")
+        cursor.execute("SELECT COUNT(*) FROM nlm_mesh_terms")
         total = cursor.fetchone()[0]
-        print(f"\nTotal registros en mesh_terms: {total:,}")
+        print(f"\nTotal registros en nlm_mesh_terms: {total:,}")
 
         # Mostrar distribución por categoría
         cursor.execute("""
             SELECT parent_category, COUNT(*) as count
-            FROM mesh_terms
+            FROM nlm_mesh_terms
             WHERE parent_category IS NOT NULL
             GROUP BY parent_category
             ORDER BY count DESC

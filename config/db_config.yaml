@@ -1,11 +1,16 @@
 # Configuración de base de datos PostgreSQL
+# IMPORTANTE: Las credenciales se leen de variables de entorno primero.
+# Si no existen, se usan estos valores como fallback.
+# Configura: PUBMED_DB_HOST, PUBMED_DB_PORT, PUBMED_DB_NAME, PUBMED_DB_USER, PUBMED_DB_PASSWORD
 
 database:
   host: localhost
   port: 5432
   name: pubmed_db
   user: pubmed_user
-  password: "REDACTED_PWD"
+  # La contraseña se lee de PUBMED_DB_PASSWORD (recomendado)
+  # o puedes ponerla aquí para desarrollo local:
+  password: ""
 
 # Configuración del pool de conexiones
 pool:

@@ -1,28 +1,34 @@
 """
 Cliente de PubMed.
 
-Wrapper limpio de Entrez para búsquedas y descargas.
+Wrapper simplificado que usa PubMedBatchDownloader internamente.
+Proporciona una interfaz limpia para operaciones comunes.
+
+NOTA: Para descargas grandes o con rate limiting avanzado,
+usar PubMedBatchDownloader directamente.
 """
 
 from typing import Any, Dict, List, Optional
-
-from Bio import Entrez
 
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
 from config.settings import settings
+from src.download.batch_downloader import PubMedBatchDownloader
 
 
 class PubMedClient:
     """
-    Cliente para la API de PubMed (NCBI Entrez).
+    Cliente simplificado para la API de PubMed (NCBI Entrez).
 
-    Proporciona métodos simplificados para:
-    - Buscar PMIDs (esearch)
-    - Descargar artículos (efetch)
-    - Obtener conteos (esearch count)
+    Usa PubMedBatchDownloader internamente para:
+    - Rate limiting automático
+    - Reintentos con backoff
+    - Manejo de errores HTTP
+
+    Para operaciones avanzadas o descargas masivas,
+    usar PubMedBatchDownloader directamente.
     """
 
     def __init__(
@@ -48,10 +54,14 @@ class PubMedClient:
                 "Configúralo en config/pubmed_config.yaml"
             )
 
-        # Configurar Entrez
-        Entrez.email = self.email
-        if self.api_key:
-            Entrez.api_key = self.api_key
+        # Usar batch_downloader internamente
+        rate_config = settings.pubmed.get('rate_limiting', {})
+        self._downloader = PubMedBatchDownloader(
+            email=self.email,
+            api_key=self.api_key,
+            requests_per_second=rate_config.get('requests_per_second', 3),
+            requests_per_second_off_peak=rate_config.get('requests_per_second_off_peak', 10),
+        )
 
     def search(
         self,
@@ -70,17 +80,7 @@ class PubMedClient:
         Returns:
             Lista de PMIDs encontrados
         """
-        handle = Entrez.esearch(
-            db="pubmed",
-            term=query,
-            retmax=retmax,
-            retstart=retstart,
-            usehistory="y",
-        )
-        record = Entrez.read(handle)
-        handle.close()
-
-        return [int(pmid) for pmid in record.get("IdList", [])]
+        return self._downloader.search_pmids(query, retmax=retmax, retstart=retstart)
 
     def get_count(self, query: str) -> int:
         """
@@ -92,15 +92,7 @@ class PubMedClient:
         Returns:
             Número total de artículos
         """
-        handle = Entrez.esearch(
-            db="pubmed",
-            term=query,
-            retmax=0,
-        )
-        record = Entrez.read(handle)
-        handle.close()
-
-        return int(record.get("Count", 0))
+        return self._downloader.get_total_count(query)
 
     def fetch(
         self,
@@ -119,21 +111,7 @@ class PubMedClient:
         Returns:
             Registros descargados o None si falla
         """
-        if not pmids:
-            return None
-
-        id_list = ",".join(str(pmid) for pmid in pmids)
-
-        handle = Entrez.efetch(
-            db="pubmed",
-            id=id_list,
-            rettype=rettype,
-            retmode=retmode,
-        )
-        records = Entrez.read(handle)
-        handle.close()
-
-        return records
+        return self._downloader.fetch_batch(pmids, rettype=rettype, retmode=retmode)
 
     def fetch_single(self, pmid: int) -> Optional[Dict[str, Any]]:
         """
@@ -145,51 +123,35 @@ class PubMedClient:
         Returns:
             Datos del artículo o None
         """
-        records = self.fetch([pmid])
-
-        if records and "PubmedArticle" in records:
-            if records["PubmedArticle"]:
-                return records["PubmedArticle"][0]
-
-        return None
+        return self._downloader.fetch_single(pmid)
 
     def search_all(
         self,
         query: str,
-        batch_size: int = 10000,
-        max_results: Optional[int] = None
+        batch_size: int = 9999,
+        max_results: Optional[int] = None,
+        date_from: Optional[str] = None,
+        date_to: Optional[str] = None,
     ) -> List[int]:
         """
         Busca TODOS los PMIDs que coinciden con una query.
 
-        Usa paginación para queries grandes.
+        Usa paginación automática y división por períodos si excede límite de 9999.
 
         Args:
             query: Query de búsqueda
-            batch_size: Tamaño de cada página (max 10,000)
+            batch_size: Tamaño de cada página (max 9,999 por límite de PubMed)
             max_results: Máximo de resultados (None = sin límite)
+            date_from: Fecha inicio formato YYYY/MM/DD
+            date_to: Fecha fin formato YYYY/MM/DD
 
         Returns:
             Lista completa de PMIDs
         """
-        total_count = self.get_count(query)
-
-        if max_results:
-            total_count = min(total_count, max_results)
-
-        all_pmids = []
-        retstart = 0
-
-        while retstart < total_count:
-            remaining = total_count - retstart
-            current_batch = min(batch_size, remaining)
-
-            pmids = self.search(query, retmax=current_batch, retstart=retstart)
-
-            if not pmids:
-                break
-
-            all_pmids.extend(pmids)
-            retstart += current_batch
-
-        return all_pmids
+        return self._downloader.search_all_pmids(
+            query,
+            batch_size=batch_size,
+            max_results=max_results,
+            date_from=date_from,
+            date_to=date_to,
+        )

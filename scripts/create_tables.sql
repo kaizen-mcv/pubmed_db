@@ -19,7 +19,7 @@ CREATE TABLE pubmed_articles (
     article_title TEXT,                               -- Título completo del artículo
     article_abstract TEXT,                            -- Resumen/Abstract del artículo
     journal_name VARCHAR(500),                        -- Nombre de la revista científica
-    journal_issn VARCHAR(20),                         -- ISSN de la revista
+    journal_issn VARCHAR(50),                         -- ISSN de la revista
     publication_date DATE,                            -- Fecha de publicación
     article_doi VARCHAR(255),                         -- Digital Object Identifier
     publication_types TEXT,                           -- Tipos de publicación (separados por ;)
@@ -37,7 +37,7 @@ CREATE TABLE pubmed_authors (
     pubmed_id INTEGER NOT NULL REFERENCES pubmed_articles(pubmed_id) ON DELETE CASCADE,
     author_name VARCHAR(500) NOT NULL,                -- Nombre completo: "Apellido, Nombre"
     author_position INTEGER,                          -- Posición del autor (1=primer autor)
-    author_orcid VARCHAR(20),                         -- ORCID del autor
+    author_orcid VARCHAR(50),                         -- ORCID del autor
     author_email VARCHAR(255),                        -- Email del autor (raro en PubMed)
     affiliation TEXT,                                 -- Texto completo de afiliación española
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

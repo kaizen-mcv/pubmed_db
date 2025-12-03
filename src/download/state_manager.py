@@ -50,6 +50,7 @@ class DownloadState:
             "start_time": None,
             "last_update": None,
             "last_saved": None,
+            "last_successful_date": None,  # Para modo incremental
         }
 
         # Cargar estado existente si hay
@@ -244,8 +245,27 @@ class DownloadState:
             "start_time": None,
             "last_update": None,
             "last_saved": None,
+            "last_successful_date": None,
         }
         self.save()
+
+    def get_last_successful_date(self) -> Optional[str]:
+        """
+        Obtiene la fecha de la última descarga exitosa.
+
+        Returns:
+            Fecha en formato YYYY/MM/DD o None si no hay
+        """
+        return self.stats.get("last_successful_date")
+
+    def set_last_successful_date(self, date_str: str):
+        """
+        Guarda la fecha de la última descarga exitosa.
+
+        Args:
+            date_str: Fecha en formato YYYY/MM/DD
+        """
+        self.stats["last_successful_date"] = date_str
 
     def print_summary(self):
         """Imprime un resumen del estado actual."""

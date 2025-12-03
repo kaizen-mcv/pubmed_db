@@ -5,24 +5,50 @@ Analiza los datos existentes en pubmed_articles y pubmed_authors
 y asigna códigos SNOMED basándose en coincidencias de texto.
 
 Fidelidad:
-- 'V' = Verdadero: el nombre de la especialidad aparece exactamente en el texto
-- 'F' = Falso: es una inferencia/relación indirecta
+- 'snomed' = el nombre oficial SNOMED aparece en el texto
+- 'simplified' = el nombre simplificado (en/es) aparece en el texto
+- '{synonym}' = el sinónimo específico que coincidió
+
+Uso:
+    python scripts/populate_specialty_mappings.py           # Dry-run
+    python scripts/populate_specialty_mappings.py --apply   # Ejecutar
 """
 
 import sys
 import os
+import argparse
 import re
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from src.database.connection import db
+from src.utils.logger import get_logger
+
+logger = get_logger(__name__)
+
+# Sinónimos que requieren coincidencia de palabra completa (evitar substrings)
+SHORT_SYNONYMS = {'ent', 'icu', 'uci', 'pet', 'orl', 'mir', 'eye'}
+
+
+def is_word_match(text, term):
+    """
+    Verifica si el término aparece como palabra completa en el texto.
+    Usa regex para detectar límites de palabra.
+    """
+    pattern = r'\b' + re.escape(term) + r'\b'
+    return bool(re.search(pattern, text, re.IGNORECASE))
 
 
 def get_specialties():
-    """Obtiene todas las especialidades SNOMED."""
+    """
+    Obtiene todas las especialidades SNOMED con sus nombres y sinónimos.
+
+    Returns:
+        list: Lista de diccionarios con snomed_code, name_snomed, name_en, name_es, synonyms
+    """
     with db.cursor_context() as cur:
         cur.execute("""
-            SELECT snomed_code, name_en, name_es
+            SELECT snomed_code, name_snomed, name_en, name_es, synonyms
             FROM snomed_specialties
             ORDER BY name_en
         """)
@@ -30,38 +56,84 @@ def get_specialties():
         for row in cur.fetchall():
             spec = {
                 'snomed_code': row[0],
-                'name_en': row[1].lower() if row[1] else None,
-                'name_es': row[2].lower() if row[2] else None,
+                'name_snomed': row[1].lower().replace('(qualifier value)', '').strip() if row[1] else None,
+                'name_en': row[2].lower() if row[2] else None,
+                'name_es': row[3].lower() if row[3] else None,
+                'synonyms': [s.strip().lower() for s in row[4].split(';') if s.strip()] if row[4] else [],
             }
             specialties.append(spec)
         return specialties
 
 
-def check_exact_match(text, specialties):
+def check_matches(text, specialties):
     """
-    Verifica si el texto contiene el nombre exacto de alguna especialidad.
-    Retorna (snomed_code, fidelity) o (None, None)
+    Busca todas las especialidades que coinciden con el texto.
+
+    Orden de prioridad:
+    1. name_snomed → 'snomed'
+    2. name_en → 'simplified'
+    3. name_es → 'simplified'
+    4. synonyms → el sinónimo que coincidió
+
+    Args:
+        text: Texto donde buscar coincidencias
+        specialties: Lista de especialidades de get_specialties()
+
+    Returns:
+        list: Lista de tuplas (snomed_code, fidelity)
     """
     if not text:
-        return None, None
+        return []
 
     text_lower = text.lower()
+    matches = []
+    matched_codes = set()
 
-    # Buscar coincidencia exacta (nombre completo de la especialidad en el texto)
     for spec in specialties:
-        # Verificar nombre en inglés
+        code = spec['snomed_code']
+
+        # Ya encontrado por fuente de mayor prioridad
+        if code in matched_codes:
+            continue
+
+        # 1. Nombre SNOMED (sin "qualifier value")
+        if spec['name_snomed'] and spec['name_snomed'] in text_lower:
+            matches.append((code, 'snomed'))
+            matched_codes.add(code)
+            continue
+
+        # 2. Nombre inglés
         if spec['name_en'] and spec['name_en'] in text_lower:
-            return spec['snomed_code'], 'V'
-        # Verificar nombre en español
+            matches.append((code, 'simplified'))
+            matched_codes.add(code)
+            continue
+
+        # 3. Nombre español
         if spec['name_es'] and spec['name_es'] in text_lower:
-            return spec['snomed_code'], 'V'
+            matches.append((code, 'simplified'))
+            matched_codes.add(code)
+            continue
 
-    return None, None
+        # 4. Sinónimos - guardar cuál sinónimo coincidió
+        for synonym in spec['synonyms']:
+            if len(synonym) >= 3:
+                # Para sinónimos cortos, exigir coincidencia de palabra completa
+                if synonym in SHORT_SYNONYMS:
+                    if is_word_match(text_lower, synonym):
+                        matches.append((code, synonym))
+                        matched_codes.add(code)
+                        break
+                elif synonym in text_lower:
+                    matches.append((code, synonym))
+                    matched_codes.add(code)
+                    break
+
+    return matches
 
 
-def populate_journal_mappings(specialties):
+def populate_journal_mappings(specialties, apply=False):
     """Pobla la tabla journal_to_snomed."""
-    print("\n[1/5] Poblando journal_to_snomed...")
+    logger.info("[1/5] Analizando journals...")
 
     with db.cursor_context() as cur:
         # Obtener journals únicos
@@ -71,82 +143,108 @@ def populate_journal_mappings(specialties):
             WHERE journal_name IS NOT NULL
         """)
         journals = cur.fetchall()
+        logger.info(f"   Journals únicos encontrados: {len(journals)}")
 
-        inserted_v = 0
-        inserted_f = 0
+        # Contar matches
+        stats = {'snomed': 0, 'simplified': 0, 'synonym': 0, 'total': 0}
+        mappings = []
 
         for journal_name, journal_issn in journals:
-            snomed_code, fidelity = check_exact_match(journal_name, specialties)
+            matches = check_matches(journal_name, specialties)
+            for snomed_code, fidelity in matches:
+                mappings.append((journal_name, journal_issn, snomed_code, fidelity))
+                stats['total'] += 1
+                if fidelity == 'snomed':
+                    stats['snomed'] += 1
+                elif fidelity == 'simplified':
+                    stats['simplified'] += 1
+                else:
+                    stats['synonym'] += 1
 
-            if snomed_code:
+        logger.info(f"   Mapeos encontrados: {stats['total']}")
+        logger.info(f"     - Por nombre SNOMED: {stats['snomed']}")
+        logger.info(f"     - Por nombre simplificado: {stats['simplified']}")
+        logger.info(f"     - Por sinónimo: {stats['synonym']}")
+
+        if apply:
+            # Truncar tabla
+            cur.execute("TRUNCATE TABLE journal_to_snomed CASCADE")
+
+            # Insertar mappings
+            for journal_name, journal_issn, snomed_code, fidelity in mappings:
                 try:
                     cur.execute("""
                         INSERT INTO journal_to_snomed (journal_name, journal_issn, snomed_code, fidelity)
                         VALUES (%s, %s, %s, %s)
                         ON CONFLICT DO NOTHING
                     """, (journal_name, journal_issn, snomed_code, fidelity))
-                    if cur.rowcount > 0:
-                        if fidelity == 'V':
-                            inserted_v += 1
-                        else:
-                            inserted_f += 1
-                except Exception as e:
+                except Exception:
                     pass
 
-        db.commit()
-        print(f"   Insertados: {inserted_v} con fidelidad V, {inserted_f} con fidelidad F")
-        print(f"   Total: {inserted_v + inserted_f} de {len(journals)} journals analizados")
+            db.commit()
+            logger.info(f"   ✓ Insertados {stats['total']} mapeos")
+
+    return stats
 
 
-def populate_affiliation_mappings(specialties):
+def populate_affiliation_mappings(specialties, apply=False):
     """Pobla la tabla affiliation_to_snomed."""
-    print("\n[2/5] Poblando affiliation_to_snomed...")
+    logger.info("[2/5] Analizando afiliaciones...")
 
     with db.cursor_context() as cur:
-        # Obtener afiliaciones únicas (limitar para no sobrecargar)
+        # Obtener afiliaciones únicas
         cur.execute("""
             SELECT DISTINCT affiliation
             FROM pubmed_authors
             WHERE affiliation IS NOT NULL
         """)
         affiliations = [row[0] for row in cur.fetchall()]
+        logger.info(f"   Afiliaciones únicas encontradas: {len(affiliations)}")
 
-        inserted_v = 0
-        inserted_f = 0
-        patterns_added = set()
+        # Contar matches
+        stats = {'snomed': 0, 'simplified': 0, 'synonym': 0, 'total': 0}
+        mappings = []
 
         for affiliation in affiliations:
-            snomed_code, fidelity = check_exact_match(affiliation, specialties)
-
-            if snomed_code:
-                # Usar la afiliación como patrón
+            matches = check_matches(affiliation, specialties)
+            for snomed_code, fidelity in matches:
                 pattern = affiliation[:500]  # Limitar longitud
-                pattern_key = (pattern, snomed_code)
+                mappings.append((pattern, snomed_code, fidelity))
+                stats['total'] += 1
+                if fidelity == 'snomed':
+                    stats['snomed'] += 1
+                elif fidelity == 'simplified':
+                    stats['simplified'] += 1
+                else:
+                    stats['synonym'] += 1
 
-                if pattern_key not in patterns_added:
-                    try:
-                        cur.execute("""
-                            INSERT INTO affiliation_to_snomed (affiliation_pattern, pattern_type, snomed_code, fidelity)
-                            VALUES (%s, 'exact', %s, %s)
-                            ON CONFLICT DO NOTHING
-                        """, (pattern, snomed_code, fidelity))
-                        if cur.rowcount > 0:
-                            patterns_added.add(pattern_key)
-                            if fidelity == 'V':
-                                inserted_v += 1
-                            else:
-                                inserted_f += 1
-                    except Exception as e:
-                        pass
+        logger.info(f"   Mapeos encontrados: {stats['total']}")
+        logger.info(f"     - Por nombre SNOMED: {stats['snomed']}")
+        logger.info(f"     - Por nombre simplificado: {stats['simplified']}")
+        logger.info(f"     - Por sinónimo: {stats['synonym']}")
 
-        db.commit()
-        print(f"   Insertados: {inserted_v} con fidelidad V, {inserted_f} con fidelidad F")
-        print(f"   Total: {inserted_v + inserted_f} patrones de {len(affiliations)} afiliaciones")
+        if apply:
+            cur.execute("TRUNCATE TABLE affiliation_to_snomed CASCADE")
+
+            for pattern, snomed_code, fidelity in mappings:
+                try:
+                    cur.execute("""
+                        INSERT INTO affiliation_to_snomed (affiliation_pattern, pattern_type, snomed_code, fidelity)
+                        VALUES (%s, 'exact', %s, %s)
+                        ON CONFLICT DO NOTHING
+                    """, (pattern, snomed_code, fidelity))
+                except Exception:
+                    pass
+
+            db.commit()
+            logger.info(f"   ✓ Insertados {stats['total']} mapeos")
+
+    return stats
 
 
-def populate_keyword_mappings(specialties):
+def populate_keyword_mappings(specialties, apply=False):
     """Pobla la tabla keyword_to_snomed."""
-    print("\n[3/5] Poblando keyword_to_snomed...")
+    logger.info("[3/5] Analizando keywords...")
 
     with db.cursor_context() as cur:
         # Obtener keywords únicos
@@ -158,41 +256,55 @@ def populate_keyword_mappings(specialties):
 
         all_keywords = set()
         for row in cur.fetchall():
-            keywords = [k.strip() for k in row[0].split(',')]
-            all_keywords.update(keywords)
+            # Keywords separados por coma o punto y coma
+            keywords = [k.strip() for k in row[0].replace(';', ',').split(',')]
+            all_keywords.update(k for k in keywords if len(k) >= 3)
 
-        inserted_v = 0
-        inserted_f = 0
+        logger.info(f"   Keywords únicos encontrados: {len(all_keywords)}")
+
+        # Contar matches
+        stats = {'snomed': 0, 'simplified': 0, 'synonym': 0, 'total': 0}
+        mappings = []
 
         for keyword in all_keywords:
-            if len(keyword) < 3:
-                continue
+            matches = check_matches(keyword, specialties)
+            for snomed_code, fidelity in matches:
+                mappings.append((keyword, snomed_code, fidelity))
+                stats['total'] += 1
+                if fidelity == 'snomed':
+                    stats['snomed'] += 1
+                elif fidelity == 'simplified':
+                    stats['simplified'] += 1
+                else:
+                    stats['synonym'] += 1
 
-            snomed_code, fidelity = check_exact_match(keyword, specialties)
+        logger.info(f"   Mapeos encontrados: {stats['total']}")
+        logger.info(f"     - Por nombre SNOMED: {stats['snomed']}")
+        logger.info(f"     - Por nombre simplificado: {stats['simplified']}")
+        logger.info(f"     - Por sinónimo: {stats['synonym']}")
 
-            if snomed_code:
+        if apply:
+            cur.execute("TRUNCATE TABLE keyword_to_snomed CASCADE")
+
+            for keyword, snomed_code, fidelity in mappings:
                 try:
                     cur.execute("""
                         INSERT INTO keyword_to_snomed (keyword, snomed_code, fidelity)
                         VALUES (%s, %s, %s)
                         ON CONFLICT DO NOTHING
                     """, (keyword, snomed_code, fidelity))
-                    if cur.rowcount > 0:
-                        if fidelity == 'V':
-                            inserted_v += 1
-                        else:
-                            inserted_f += 1
-                except Exception as e:
+                except Exception:
                     pass
 
-        db.commit()
-        print(f"   Insertados: {inserted_v} con fidelidad V, {inserted_f} con fidelidad F")
-        print(f"   Total: {inserted_v + inserted_f} de {len(all_keywords)} keywords únicos")
+            db.commit()
+            logger.info(f"   ✓ Insertados {stats['total']} mapeos")
+
+    return stats
 
 
-def populate_title_mappings(specialties):
+def populate_title_mappings(specialties, apply=False):
     """Pobla la tabla title_pattern_to_snomed."""
-    print("\n[4/5] Poblando title_pattern_to_snomed...")
+    logger.info("[4/5] Analizando títulos...")
 
     with db.cursor_context() as cur:
         # Obtener títulos únicos
@@ -202,90 +314,114 @@ def populate_title_mappings(specialties):
             WHERE article_title IS NOT NULL
         """)
         titles = [row[0] for row in cur.fetchall()]
+        logger.info(f"   Títulos únicos encontrados: {len(titles)}")
 
-        inserted_v = 0
-        inserted_f = 0
-        patterns_added = set()
+        # Contar matches
+        stats = {'snomed': 0, 'simplified': 0, 'synonym': 0, 'total': 0}
+        mappings = []
 
         for title in titles:
-            snomed_code, fidelity = check_exact_match(title, specialties)
-
-            if snomed_code:
+            matches = check_matches(title, specialties)
+            for snomed_code, fidelity in matches:
                 pattern = title[:500]
-                pattern_key = (pattern, snomed_code)
+                mappings.append((pattern, snomed_code, fidelity))
+                stats['total'] += 1
+                if fidelity == 'snomed':
+                    stats['snomed'] += 1
+                elif fidelity == 'simplified':
+                    stats['simplified'] += 1
+                else:
+                    stats['synonym'] += 1
 
-                if pattern_key not in patterns_added:
-                    try:
-                        cur.execute("""
-                            INSERT INTO title_pattern_to_snomed (title_pattern, pattern_type, snomed_code, fidelity)
-                            VALUES (%s, 'exact', %s, %s)
-                            ON CONFLICT DO NOTHING
-                        """, (pattern, snomed_code, fidelity))
-                        if cur.rowcount > 0:
-                            patterns_added.add(pattern_key)
-                            if fidelity == 'V':
-                                inserted_v += 1
-                            else:
-                                inserted_f += 1
-                    except Exception as e:
-                        pass
+        logger.info(f"   Mapeos encontrados: {stats['total']}")
+        logger.info(f"     - Por nombre SNOMED: {stats['snomed']}")
+        logger.info(f"     - Por nombre simplificado: {stats['simplified']}")
+        logger.info(f"     - Por sinónimo: {stats['synonym']}")
 
-        db.commit()
-        print(f"   Insertados: {inserted_v} con fidelidad V, {inserted_f} con fidelidad F")
-        print(f"   Total: {inserted_v + inserted_f} patrones de {len(titles)} títulos")
+        if apply:
+            cur.execute("TRUNCATE TABLE title_pattern_to_snomed CASCADE")
+
+            for pattern, snomed_code, fidelity in mappings:
+                try:
+                    cur.execute("""
+                        INSERT INTO title_pattern_to_snomed (title_pattern, pattern_type, snomed_code, fidelity)
+                        VALUES (%s, 'exact', %s, %s)
+                        ON CONFLICT DO NOTHING
+                    """, (pattern, snomed_code, fidelity))
+                except Exception:
+                    pass
+
+            db.commit()
+            logger.info(f"   ✓ Insertados {stats['total']} mapeos")
+
+    return stats
 
 
-def populate_abstract_mappings(specialties):
+def populate_abstract_mappings(specialties, apply=False):
     """Pobla la tabla abstract_pattern_to_snomed."""
-    print("\n[5/5] Poblando abstract_pattern_to_snomed...")
+    logger.info("[5/5] Analizando abstracts...")
 
     with db.cursor_context() as cur:
-        # Obtener abstracts (muchos, procesamos en lotes)
+        # Obtener abstracts
         cur.execute("""
             SELECT pubmed_id, article_abstract
             FROM pubmed_articles
             WHERE article_abstract IS NOT NULL
         """)
         abstracts = cur.fetchall()
+        logger.info(f"   Abstracts encontrados: {len(abstracts)}")
 
-        inserted_v = 0
-        inserted_f = 0
-        patterns_added = set()
+        # Contar matches
+        stats = {'snomed': 0, 'simplified': 0, 'synonym': 0, 'total': 0}
+        mappings = []
+        patterns_seen = set()
 
         for pubmed_id, abstract in abstracts:
-            snomed_code, fidelity = check_exact_match(abstract, specialties)
-
-            if snomed_code:
-                # Usar los primeros 500 caracteres como patrón identificador
+            matches = check_matches(abstract, specialties)
+            for snomed_code, fidelity in matches:
                 pattern = abstract[:500]
                 pattern_key = (pattern, snomed_code)
+                if pattern_key not in patterns_seen:
+                    patterns_seen.add(pattern_key)
+                    mappings.append((pattern, snomed_code, fidelity))
+                    stats['total'] += 1
+                    if fidelity == 'snomed':
+                        stats['snomed'] += 1
+                    elif fidelity == 'simplified':
+                        stats['simplified'] += 1
+                    else:
+                        stats['synonym'] += 1
 
-                if pattern_key not in patterns_added:
-                    try:
-                        cur.execute("""
-                            INSERT INTO abstract_pattern_to_snomed (abstract_pattern, pattern_type, snomed_code, fidelity)
-                            VALUES (%s, 'exact', %s, %s)
-                            ON CONFLICT DO NOTHING
-                        """, (pattern, snomed_code, fidelity))
-                        if cur.rowcount > 0:
-                            patterns_added.add(pattern_key)
-                            if fidelity == 'V':
-                                inserted_v += 1
-                            else:
-                                inserted_f += 1
-                    except Exception as e:
-                        pass
+        logger.info(f"   Mapeos encontrados: {stats['total']}")
+        logger.info(f"     - Por nombre SNOMED: {stats['snomed']}")
+        logger.info(f"     - Por nombre simplificado: {stats['simplified']}")
+        logger.info(f"     - Por sinónimo: {stats['synonym']}")
 
-        db.commit()
-        print(f"   Insertados: {inserted_v} con fidelidad V, {inserted_f} con fidelidad F")
-        print(f"   Total: {inserted_v + inserted_f} patrones de {len(abstracts)} abstracts")
+        if apply:
+            cur.execute("TRUNCATE TABLE abstract_pattern_to_snomed CASCADE")
+
+            for pattern, snomed_code, fidelity in mappings:
+                try:
+                    cur.execute("""
+                        INSERT INTO abstract_pattern_to_snomed (abstract_pattern, pattern_type, snomed_code, fidelity)
+                        VALUES (%s, 'exact', %s, %s)
+                        ON CONFLICT DO NOTHING
+                    """, (pattern, snomed_code, fidelity))
+                except Exception:
+                    pass
+
+            db.commit()
+            logger.info(f"   ✓ Insertados {stats['total']} mapeos")
+
+    return stats
 
 
 def show_stats():
     """Muestra estadísticas de las tablas de mapeo."""
-    print("\n" + "=" * 60)
-    print("ESTADÍSTICAS DE MAPEOS")
-    print("=" * 60)
+    logger.info("")
+    logger.info("=" * 60)
+    logger.info("ESTADÍSTICAS DE MAPEOS")
+    logger.info("=" * 60)
 
     with db.cursor_context() as cur:
         tables = [
@@ -300,48 +436,75 @@ def show_stats():
             cur.execute(f"SELECT COUNT(*) FROM {table}")
             total = cur.fetchone()[0]
 
-            cur.execute(f"SELECT COUNT(*) FROM {table} WHERE fidelity = 'V'")
-            fidelity_v = cur.fetchone()[0]
+            cur.execute(f"SELECT COUNT(*) FROM {table} WHERE fidelity = 'snomed'")
+            fidelity_snomed = cur.fetchone()[0]
 
-            cur.execute(f"SELECT COUNT(*) FROM {table} WHERE fidelity = 'F'")
-            fidelity_f = cur.fetchone()[0]
+            cur.execute(f"SELECT COUNT(*) FROM {table} WHERE fidelity = 'simplified'")
+            fidelity_simplified = cur.fetchone()[0]
+
+            cur.execute(f"SELECT COUNT(*) FROM {table} WHERE fidelity NOT IN ('snomed', 'simplified')")
+            fidelity_synonym = cur.fetchone()[0]
 
             cur.execute(f"SELECT COUNT(DISTINCT snomed_code) FROM {table}")
             specialties = cur.fetchone()[0]
 
-            print(f"\n{table}:")
-            print(f"   Total: {total} mapeos")
-            print(f"   Fidelidad V (exacto): {fidelity_v}")
-            print(f"   Fidelidad F (inferido): {fidelity_f}")
-            print(f"   Especialidades distintas: {specialties}")
+            logger.info(f"\n{table}:")
+            logger.info(f"   Total: {total} mapeos")
+            logger.info(f"   Por SNOMED: {fidelity_snomed}")
+            logger.info(f"   Por simplificado: {fidelity_simplified}")
+            logger.info(f"   Por sinónimo: {fidelity_synonym}")
+            logger.info(f"   Especialidades distintas: {specialties}")
 
 
 def main():
-    print("=" * 60)
-    print("POBLANDO TABLAS DE MAPEO SNOMED")
-    print("=" * 60)
-    print("\nFidelidad:")
-    print("  'V' = Verdadero: nombre exacto de especialidad encontrado")
-    print("  'F' = Falso: relación inferida")
+    parser = argparse.ArgumentParser(description='Pobla las tablas de mapeo SNOMED')
+    parser.add_argument('--apply', action='store_true', help='Ejecutar cambios (sin esto es dry-run)')
+    args = parser.parse_args()
+
+    logger.info("=" * 60)
+    logger.info("POBLANDO TABLAS DE MAPEO SNOMED")
+    logger.info("=" * 60)
+
+    if not args.apply:
+        logger.info("MODO DRY-RUN: No se harán cambios. Usa --apply para ejecutar.")
+    else:
+        logger.info("MODO APLICAR: Se truncarán y repoblarán las tablas.")
+
+    logger.info("")
+    logger.info("Fidelidad:")
+    logger.info("  'snomed' = nombre oficial SNOMED encontrado")
+    logger.info("  'simplified' = nombre simplificado (en/es) encontrado")
+    logger.info("  '{synonym}' = sinónimo específico que coincidió")
+    logger.info("")
 
     try:
         # Obtener especialidades
         specialties = get_specialties()
-        print(f"\nEspecialidades cargadas: {len(specialties)}")
+        logger.info(f"Especialidades cargadas: {len(specialties)}")
+
+        # Contar sinónimos totales
+        total_synonyms = sum(len(s['synonyms']) for s in specialties)
+        logger.info(f"Sinónimos totales: {total_synonyms}")
+        logger.info("")
 
         # Poblar cada tabla
-        populate_journal_mappings(specialties)
-        populate_affiliation_mappings(specialties)
-        populate_keyword_mappings(specialties)
-        populate_title_mappings(specialties)
-        populate_abstract_mappings(specialties)
+        populate_journal_mappings(specialties, apply=args.apply)
+        populate_affiliation_mappings(specialties, apply=args.apply)
+        populate_keyword_mappings(specialties, apply=args.apply)
+        populate_title_mappings(specialties, apply=args.apply)
+        populate_abstract_mappings(specialties, apply=args.apply)
 
-        # Mostrar estadísticas
-        show_stats()
+        # Mostrar estadísticas si se aplicaron cambios
+        if args.apply:
+            show_stats()
 
-        print("\n" + "=" * 60)
-        print("COMPLETADO")
-        print("=" * 60)
+        logger.info("")
+        logger.info("=" * 60)
+        if args.apply:
+            logger.info("COMPLETADO - Tablas repobladas")
+        else:
+            logger.info("DRY-RUN COMPLETADO - Usa --apply para ejecutar")
+        logger.info("=" * 60)
 
     finally:
         db.close()

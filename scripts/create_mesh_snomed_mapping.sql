@@ -195,7 +195,147 @@ INSERT INTO mesh_to_snomed (mesh_tree_prefix, snomed_code, description, confiden
 ('N02.421.784', '394602003', 'Rehabilitation', 0.90),
 
 -- N06.850.520: Forensic Medicine → Medical specialty (OTHER) - Medicina Legal
-('N06.850.520', '394733009', 'Forensic Medicine', 0.85);
+('N06.850.520', '394733009', 'Forensic Medicine', 0.85),
+
+-- =====================================================
+-- MAPEOS ADICIONALES (Subcategorías específicas)
+-- =====================================================
+
+-- Subcategorías de Neoplasms (C04)
+('C04.588.149', '394579002', 'Breast Neoplasms (cardiology overlap)', 0.60),
+('C04.588.180', '394584008', 'Colorectal Neoplasms (gastro)', 0.80),
+('C04.588.274', '418112009', 'Lung Neoplasms (pulmonary)', 0.75),
+('C04.588.322', '394803006', 'Hematologic Neoplasms', 0.90),
+('C04.588.364', '394612005', 'Kidney Neoplasms (urology)', 0.85),
+('C04.588.443', '394612005', 'Urinary Bladder Neoplasms', 0.85),
+('C04.588.945', '394612005', 'Urogenital Neoplasms', 0.85),
+('C04.588.614', '394594003', 'Ocular Neoplasms', 0.85),
+('C04.588.839', '394582007', 'Skin Neoplasms', 0.85),
+
+-- Subcategorías de Nervous System (C10)
+('C10.228', '394591006', 'Central Nervous System Diseases', 0.90),
+('C10.228.140', '394591006', 'Brain Diseases', 0.95),
+('C10.228.140.300', '394591006', 'Cerebrovascular Disorders', 0.90),
+('C10.228.662', '394591006', 'Movement Disorders', 0.90),
+('C10.574', '394591006', 'Neurodegenerative Diseases', 0.95),
+('C10.597', '394591006', 'Neurologic Manifestations', 0.80),
+('C10.668', '394591006', 'Neuromuscular Diseases', 0.85),
+('C10.720', '394610002', 'Peripheral Nervous System Diseases (surgical)', 0.75),
+
+-- Subcategorías de Cardiovascular (C14)
+('C14.280.067', '394579002', 'Arrhythmias, Cardiac', 0.95),
+('C14.280.238', '394579002', 'Cardiomyopathies', 0.95),
+('C14.280.383', '394579002', 'Heart Defects, Congenital', 0.90),
+('C14.280.434', '394579002', 'Heart Failure', 0.95),
+('C14.280.484', '394579002', 'Heart Valve Diseases', 0.90),
+('C14.280.647', '394579002', 'Myocardial Ischemia', 0.95),
+('C14.907.137', '408463005', 'Arterial Occlusive Diseases', 0.90),
+('C14.907.253', '408463005', 'Embolism and Thrombosis', 0.85),
+('C14.907.940', '408463005', 'Venous Thrombosis', 0.90),
+
+-- Subcategorías de Digestive System (C06)
+('C06.130', '394584008', 'Biliary Tract Diseases', 0.90),
+('C06.198', '394584008', 'Digestive System Abnormalities', 0.85),
+('C06.267', '394584008', 'Esophageal Diseases', 0.95),
+('C06.301', '394584008', 'Gastroenteritis', 0.90),
+('C06.405', '394584008', 'Gastrointestinal Diseases', 0.95),
+('C06.552', '394584008', 'Liver Diseases', 0.95),
+('C06.689', '394584008', 'Pancreatic Diseases', 0.90),
+
+-- Subcategorías de Respiratory (C08)
+('C08.127', '418112009', 'Bronchial Diseases', 0.95),
+('C08.381', '418112009', 'Lung Diseases', 0.95),
+('C08.381.495', '418112009', 'Lung Diseases, Interstitial', 0.90),
+('C08.381.520', '418112009', 'Lung Diseases, Obstructive', 0.95),
+('C08.618', '418112009', 'Respiration Disorders', 0.85),
+('C08.730', '418112009', 'Respiratory Tract Infections', 0.85),
+
+-- Subcategorías de Endocrine (C19)
+('C19.246', '394583002', 'Diabetes Mellitus', 0.95),
+('C19.700', '394583002', 'Thyroid Diseases', 0.95),
+('C19.053', '394583002', 'Adrenal Gland Diseases', 0.90),
+('C19.391', '394583002', 'Gonadal Disorders', 0.85),
+
+-- Subcategorías de Musculoskeletal (C05)
+('C05.116', '394801008', 'Bone Diseases', 0.85),
+('C05.550', '394810000', 'Joint Diseases', 0.90),
+('C05.651', '394810000', 'Muscular Diseases', 0.85),
+('C05.799', '394810000', 'Rheumatic Diseases', 0.95),
+('C05.116.198', '394801008', 'Bone Fractures', 0.90),
+('C05.550.114', '394810000', 'Arthritis', 0.95),
+('C05.550.114.606', '394810000', 'Arthritis, Rheumatoid', 0.95),
+
+-- Subcategorías de Kidney/Urinary (C12/C13)
+('C12.777.419', '394589003', 'Kidney Diseases', 0.95),
+('C12.777.419.403', '394589003', 'Glomerulonephritis', 0.95),
+('C12.777.419.570', '394589003', 'Nephrosis', 0.90),
+('C12.777.419.780', '394589003', 'Renal Insufficiency', 0.95),
+
+-- Subcategorías de Pediatrics
+('C16.614', '394537008', 'Neonatal Diseases', 0.95),
+('C16.300', '394580004', 'Genetic Diseases, Inborn', 0.90),
+
+-- Subcategorías de Mental Disorders (F03)
+('F03.087', '394587001', 'Anxiety Disorders', 0.90),
+('F03.300', '394587001', 'Dissociative Disorders', 0.85),
+('F03.550', '394587001', 'Mood Disorders', 0.95),
+('F03.550.325', '394587001', 'Depression', 0.95),
+('F03.600', '394587001', 'Neurotic Disorders', 0.85),
+-- F03.625 ya definido arriba como Child and Adolescent Mental Disorders
+('F03.700', '394587001', 'Schizophrenia Spectrum', 0.95),
+('F03.875', '394587001', 'Somatoform Disorders', 0.80),
+('F03.900', '408468001', 'Substance-Related Disorders', 0.85),
+
+-- =====================================================
+-- MAPEOS POR CATEGORÍA MeSH (A = Anatomy - para investigación)
+-- =====================================================
+
+('A01.923', '408463005', 'Vascular System anatomy research', 0.60),
+('A02', '394801008', 'Musculoskeletal System anatomy', 0.60),
+('A03', '394584008', 'Digestive System anatomy', 0.60),
+('A04', '418112009', 'Respiratory System anatomy', 0.60),
+('A05.360', '394612005', 'Urogenital System anatomy', 0.60),
+('A06', '394583002', 'Endocrine System anatomy', 0.60),
+('A07', '394579002', 'Cardiovascular System anatomy', 0.60),
+('A08', '394591006', 'Nervous System anatomy', 0.65),
+('A09', '394594003', 'Sense Organs anatomy', 0.65),
+('A10', '394582007', 'Tissues (integumentary)', 0.55),
+('A14', '394609007', 'Stomatognathic System anatomy', 0.60),
+('A15', '394803006', 'Hemic and Immune Systems anatomy', 0.60),
+
+-- =====================================================
+-- MAPEOS POR CATEGORÍA MeSH (D = Chemicals and Drugs)
+-- =====================================================
+
+('D27.505.954.248', '394593009', 'Antineoplastic Agents', 0.75),
+('D27.505.954.248.025', '394593009', 'Antimetabolites, Antineoplastic', 0.80),
+('D27.505.696.277.100', '394579002', 'Antiarrhythmia Agents', 0.75),
+('D27.505.696.277.600', '394579002', 'Antihypertensive Agents', 0.75),
+('D27.505.696.377', '418112009', 'Bronchodilator Agents', 0.70),
+('D27.505.696.560', '394584008', 'Gastrointestinal Agents', 0.75),
+('D27.505.519.389', '394583002', 'Hypoglycemic Agents', 0.80),
+('D27.505.954.427', '394807007', 'Anti-Infective Agents', 0.70),
+('D27.505.954.427.040', '394807007', 'Anti-Bacterial Agents', 0.80),
+('D27.505.954.427.080', '394807007', 'Antifungal Agents', 0.75),
+('D27.505.954.427.220', '394807007', 'Antiviral Agents', 0.80),
+('D27.505.696.663', '394587001', 'Psychotropic Drugs', 0.75),
+
+-- =====================================================
+-- MAPEOS POR CATEGORÍA MeSH (B = Organisms - for microbiology)
+-- =====================================================
+
+('B01', '408454008', 'Eukaryota (microbiology)', 0.60),
+('B02', '408454008', 'Archaea (microbiology)', 0.70),
+('B03', '394807007', 'Bacteria (infectious diseases)', 0.75),
+('B04', '394807007', 'Viruses (infectious diseases)', 0.75),
+
+-- =====================================================
+-- MAPEOS POR CATEGORÍA MeSH (H = Disciplines and Occupations)
+-- =====================================================
+
+('H02.403', '394821009', 'Occupational Medicine research', 0.85),
+('H02.478', '409968004', 'Preventive Medicine research', 0.80),
+('H02.403.720', '408443003', 'Sports Medicine', 0.85);
 
 -- =====================================================
 -- ÍNDICES
@@ -221,10 +361,13 @@ COMMENT ON COLUMN mesh_to_snomed.confidence IS 'Nivel de confianza del mapeo (0.
 -- FUNCIÓN AUXILIAR: Encontrar especialidades para un tree number
 -- =====================================================
 
+DROP FUNCTION IF EXISTS get_specialties_for_mesh_tree(VARCHAR);
+
 CREATE OR REPLACE FUNCTION get_specialties_for_mesh_tree(tree_number VARCHAR)
 RETURNS TABLE (
     snomed_code VARCHAR,
     specialty_name_en VARCHAR,
+    specialty_name_snomed VARCHAR,
     specialty_name_es VARCHAR,
     confidence DECIMAL
 ) AS $$
@@ -233,6 +376,7 @@ BEGIN
     SELECT
         m.snomed_code,
         ms.name_en::VARCHAR,
+        ms.name_snomed::VARCHAR,
         ms.name_es::VARCHAR,
         m.confidence
     FROM mesh_to_snomed m

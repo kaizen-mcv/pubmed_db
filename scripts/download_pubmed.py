@@ -5,6 +5,7 @@ Script principal de descarga masiva de PubMed.
 Uso:
     python download_pubmed.py                  # Descarga nueva
     python download_pubmed.py --resume         # Reanudar descarga
+    python download_pubmed.py --incremental    # Solo artículos nuevos (para CRON)
     python download_pubmed.py --config mi.yaml # Configuración personalizada
 
 Características:
@@ -12,6 +13,7 @@ Características:
 - Recuperación ante interrupciones
 - Filtrado de autores españoles
 - Logging completo
+- Modo incremental para actualizaciones periódicas
 """
 
 import sys
@@ -126,14 +128,18 @@ class PubMedDownloader:
         signal.signal(signal.SIGINT, handler)
         signal.signal(signal.SIGTERM, handler)
 
-    def download(self, resume: bool = False):
+    def download(self, resume: bool = False, incremental: bool = False):
         """
         Ejecuta la descarga.
 
         Args:
             resume: Si True, continúa descarga previa
+            incremental: Si True, solo descarga artículos nuevos desde última ejecución
         """
-        if not resume:
+        if incremental:
+            self.logger.info("Modo incremental: solo artículos nuevos")
+            # No resetear estado en modo incremental
+        elif not resume:
             self.logger.info("Iniciando descarga nueva")
             self.state.reset()
         else:
@@ -147,6 +153,17 @@ class PubMedDownloader:
 
         date_from = search_config.get('date_from')
         date_to = search_config.get('date_to')
+
+        # En modo incremental, usar fecha de última descarga exitosa
+        if incremental:
+            last_date = self.state.get_last_successful_date()
+            if last_date:
+                date_from = last_date
+                self.logger.info(f"Buscando artículos desde: {date_from}")
+            else:
+                self.logger.warning("No hay fecha previa, usando date_from de config")
+            # date_to siempre es hoy en modo incremental
+            date_to = datetime.now().strftime("%Y/%m/%d")
 
         # Query completa para logging
         query = base_query
@@ -217,6 +234,9 @@ class PubMedDownloader:
                     continue
 
                 # Procesar cada artículo
+                # Lista de PMIDs procesados exitosamente en este lote (pendientes de commit)
+                pmids_pending_commit = []
+
                 with db.cursor_context() as cur:
                     for article in records["PubmedArticle"]:
                         if self.interrupted:
@@ -226,22 +246,36 @@ class PubMedDownloader:
                             pmid = ArticleService.process_and_save(cur, article)
 
                             if pmid:
-                                self.state.mark_downloaded(pmid)
-                                articles_processed += 1
+                                # NO marcar como descargado aún - esperar al commit
+                                pmids_pending_commit.append(pmid)
                                 articles_since_commit += 1
 
                                 # Commit periódico
                                 if articles_since_commit >= self.commit_frequency:
                                     db.commit()
+                                    # AHORA sí marcar como descargados (después del commit exitoso)
+                                    for committed_pmid in pmids_pending_commit:
+                                        self.state.mark_downloaded(committed_pmid)
+                                        articles_processed += 1
+                                    pmids_pending_commit = []
                                     articles_since_commit = 0
 
                         except Exception as e:
                             pmid = article.get('MedlineCitation', {}).get('PMID', 'unknown')
                             self.logger.error(f"Error PMID {pmid}: {e}")
                             self.state.mark_failed(int(pmid) if pmid != 'unknown' else 0, str(e))
+                            # Rollback para recuperar la transacción y continuar
+                            db.rollback()
+                            # Limpiar PMIDs pendientes ya que el rollback los descartó
+                            pmids_pending_commit = []
+                            articles_since_commit = 0
 
                     # Commit final del lote
                     db.commit()
+                    # Marcar los restantes como descargados
+                    for committed_pmid in pmids_pending_commit:
+                        self.state.mark_downloaded(committed_pmid)
+                        articles_processed += 1
 
                 # Guardar estado periódicamente
                 if articles_processed % self.save_frequency == 0:
@@ -270,6 +304,11 @@ class PubMedDownloader:
                     "Descarga interrumpida. Usa --resume para continuar."
                 )
             else:
+                # Guardar fecha de descarga exitosa para modo incremental
+                self.state.set_last_successful_date(
+                    datetime.now().strftime("%Y/%m/%d")
+                )
+                self.state.save()
                 self.logger.info("Descarga completada")
 
 
@@ -287,11 +326,16 @@ def main():
         action="store_true",
         help="Reanudar descarga previa"
     )
+    parser.add_argument(
+        "--incremental",
+        action="store_true",
+        help="Solo descargar artículos nuevos desde última ejecución (para CRON)"
+    )
 
     args = parser.parse_args()
 
     downloader = PubMedDownloader(args.config)
-    downloader.download(resume=args.resume)
+    downloader.download(resume=args.resume, incremental=args.incremental)
 
 
 if __name__ == "__main__":
