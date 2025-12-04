@@ -57,7 +57,7 @@ search:
   # Filtro de fechas (opcional)
   # Formato: YYYY/MM/DD o YYYY/MM o YYYY
   date_from: "2015/01/01"
-  date_to: "2024/12/31"
+  date_to: "2025/12/31"
 
   # Máximo de artículos a descargar (null = sin límite)
   max_articles: null
