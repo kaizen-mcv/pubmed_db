@@ -1,11 +1,11 @@
 {
-  "total_articles": 99849,
-  "total_author_records": 414316,
-  "unique_authors": 173512,
-  "unique_journals": 5397,
+  "total_articles": 471692,
+  "total_author_records": 2086595,
+  "unique_authors": 540354,
+  "unique_journals": 8256,
   "date_range": {
     "from": "2009-01-01",
-    "to": "2024-10-01"
+    "to": "2026-12-01"
   },
-  "generated_at": "2025-12-01T12:24:44.817865"
+  "generated_at": "2025-12-07T18:58:42.578059"
 }

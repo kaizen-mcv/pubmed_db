@@ -1,15 +1,15 @@
 {
-  "authors_with_orcid": 13320,
-  "unique_authors_with_orcid": 9801,
+  "authors_with_orcid": 423806,
+  "unique_authors_with_orcid": 142386,
   "authors_with_email": 0,
   "unique_authors_with_email": 0,
-  "articles_with_doi": 98663,
-  "total_articles": 99849,
-  "total_author_records": 414316,
-  "total_unique_authors": 173512,
+  "articles_with_doi": 469202,
+  "total_articles": 471692,
+  "total_author_records": 2086595,
+  "total_unique_authors": 540354,
   "percentages": {
-    "orcid": 5.65,
+    "orcid": 26.35,
     "email": 0.0,
-    "doi": 98.81
+    "doi": 99.47
   }
 }

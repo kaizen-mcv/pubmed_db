@@ -1,85 +1,85 @@
 {
-  "articles": {
+  "pubmed_articles": {
     "pubmed_id": {
-      "count": 99849,
-      "total": 99849,
+      "count": 471692,
+      "total": 471692,
       "percentage": 100.0
     },
     "article_title": {
-      "count": 99849,
-      "total": 99849,
+      "count": 471692,
+      "total": 471692,
       "percentage": 100.0
     },
     "article_abstract": {
-      "count": 90538,
-      "total": 99849,
-      "percentage": 90.67
+      "count": 427108,
+      "total": 471692,
+      "percentage": 90.55
     },
     "journal_name": {
-      "count": 99849,
-      "total": 99849,
+      "count": 471692,
+      "total": 471692,
       "percentage": 100.0
     },
     "journal_issn": {
-      "count": 99840,
-      "total": 99849,
-      "percentage": 99.99
+      "count": 471443,
+      "total": 471692,
+      "percentage": 99.95
     },
     "publication_date": {
-      "count": 99810,
-      "total": 99849,
-      "percentage": 99.96
+      "count": 471406,
+      "total": 471692,
+      "percentage": 99.94
     },
     "article_doi": {
-      "count": 98663,
-      "total": 99849,
-      "percentage": 98.81
+      "count": 469202,
+      "total": 471692,
+      "percentage": 99.47
     },
     "publication_types": {
-      "count": 99849,
-      "total": 99849,
+      "count": 471692,
+      "total": 471692,
       "percentage": 100.0
     },
     "mesh_terms": {
-      "count": 79861,
-      "total": 99849,
-      "percentage": 79.98
+      "count": 327532,
+      "total": 471692,
+      "percentage": 69.44
     },
     "author_keywords": {
-      "count": 61010,
-      "total": 99849,
-      "percentage": 61.1
+      "count": 331708,
+      "total": 471692,
+      "percentage": 70.32
     }
   },
-  "article_authors": {
+  "pubmed_authors": {
     "pubmed_id": {
-      "count": 414316,
-      "total": 414316,
+      "count": 2086595,
+      "total": 2086595,
       "percentage": 100.0
     },
     "author_name": {
-      "count": 414316,
-      "total": 414316,
+      "count": 2086595,
+      "total": 2086595,
       "percentage": 100.0
     },
     "author_position": {
-      "count": 414316,
-      "total": 414316,
+      "count": 2086595,
+      "total": 2086595,
       "percentage": 100.0
     },
     "author_orcid": {
-      "count": 13320,
-      "total": 414316,
-      "percentage": 3.21
+      "count": 423806,
+      "total": 2086595,
+      "percentage": 20.31
     },
     "author_email": {
       "count": 0,
-      "total": 414316,
+      "total": 2086595,
       "percentage": 0.0
     },
     "affiliation": {
-      "count": 414316,
-      "total": 414316,
+      "count": 2086595,
+      "total": 2086595,
       "percentage": 100.0
     }
   }

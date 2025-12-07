@@ -9,7 +9,8 @@
       "Bash(python scripts/download_pubmed.py:*)",
       "Bash(python scripts/statistics.py:*)",
       "Bash(python scripts/import_mesh_terms.py:*)",
-      "Bash(python scripts/populate_specialty_mappings.py:*)"
+      "Bash(python scripts/populate_specialty_mappings.py:*)",
+      "Bash(PUBMED_DB_PASSWORD='REDACTED_PWD' python scripts/statistics.py:*)"
     ],
     "deny": [],
     "ask": []

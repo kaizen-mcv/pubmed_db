@@ -1,0 +1,162 @@
+{
+  "total_author_records": 2086595,
+  "total_unique_authors": 540354,
+  "records_with_specialty": 643742,
+  "unique_authors_with_specialty": 198503,
+  "percentages": {
+    "records": 30.85,
+    "unique_authors": 36.74
+  },
+  "by_specialty": [
+    {
+      "specialty": "Surgery",
+      "unique_authors": 26182,
+      "percentage": 4.85
+    },
+    {
+      "specialty": "Oncology",
+      "unique_authors": 21180,
+      "percentage": 3.92
+    },
+    {
+      "specialty": "Pathology",
+      "unique_authors": 18939,
+      "percentage": 3.5
+    },
+    {
+      "specialty": "Urology",
+      "unique_authors": 17089,
+      "percentage": 3.16
+    },
+    {
+      "specialty": "Microbiology",
+      "unique_authors": 14640,
+      "percentage": 2.71
+    },
+    {
+      "specialty": "Neurology",
+      "unique_authors": 13104,
+      "percentage": 2.43
+    },
+    {
+      "specialty": "Pediatrics",
+      "unique_authors": 12331,
+      "percentage": 2.28
+    },
+    {
+      "specialty": "Cardiology",
+      "unique_authors": 11212,
+      "percentage": 2.07
+    },
+    {
+      "specialty": "Internal Medicine",
+      "unique_authors": 11066,
+      "percentage": 2.05
+    },
+    {
+      "specialty": "Immunology",
+      "unique_authors": 9937,
+      "percentage": 1.84
+    },
+    {
+      "specialty": "Hematology",
+      "unique_authors": 9215,
+      "percentage": 1.71
+    },
+    {
+      "specialty": "Dermatology",
+      "unique_authors": 8603,
+      "percentage": 1.59
+    },
+    {
+      "specialty": "Radiology",
+      "unique_authors": 7637,
+      "percentage": 1.41
+    },
+    {
+      "specialty": "Endocrinology",
+      "unique_authors": 7291,
+      "percentage": 1.35
+    },
+    {
+      "specialty": "Psychiatry",
+      "unique_authors": 6957,
+      "percentage": 1.29
+    },
+    {
+      "specialty": "Ophthalmology",
+      "unique_authors": 6745,
+      "percentage": 1.25
+    },
+    {
+      "specialty": "Intensive Care",
+      "unique_authors": 6698,
+      "percentage": 1.24
+    },
+    {
+      "specialty": "Pharmacology",
+      "unique_authors": 6421,
+      "percentage": 1.19
+    },
+    {
+      "specialty": "Gastroenterology",
+      "unique_authors": 6285,
+      "percentage": 1.16
+    },
+    {
+      "specialty": "Pulmonology",
+      "unique_authors": 5405,
+      "percentage": 1.0
+    },
+    {
+      "specialty": "Rheumatology",
+      "unique_authors": 5138,
+      "percentage": 0.95
+    },
+    {
+      "specialty": "Nephrology",
+      "unique_authors": 5031,
+      "percentage": 0.93
+    },
+    {
+      "specialty": "Anesthesiology",
+      "unique_authors": 4360,
+      "percentage": 0.81
+    },
+    {
+      "specialty": "Orthopedics",
+      "unique_authors": 4220,
+      "percentage": 0.78
+    },
+    {
+      "specialty": "Allergy",
+      "unique_authors": 3668,
+      "percentage": 0.68
+    },
+    {
+      "specialty": "Rehabilitation",
+      "unique_authors": 2374,
+      "percentage": 0.44
+    },
+    {
+      "specialty": "Nuclear Medicine",
+      "unique_authors": 2192,
+      "percentage": 0.41
+    },
+    {
+      "specialty": "Otorhinolaryngology",
+      "unique_authors": 2054,
+      "percentage": 0.38
+    },
+    {
+      "specialty": "Geriatrics",
+      "unique_authors": 1371,
+      "percentage": 0.25
+    },
+    {
+      "specialty": "Family Medicine",
+      "unique_authors": 460,
+      "percentage": 0.09
+    }
+  ]
+}

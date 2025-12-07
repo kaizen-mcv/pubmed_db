@@ -2,30 +2,30 @@
   "position_distribution": [
     {
       "position": "Primer autor",
-      "count": 68613
+      "count": 305901
     },
     {
       "position": "Segundo autor",
-      "count": 58627
+      "count": 283387
     },
     {
       "position": "Tercer autor",
-      "count": 54020
+      "count": 262680
     },
     {
       "position": "Posición 4-5",
-      "count": 84932
+      "count": 421436
     },
     {
       "position": "Posición 6-10",
-      "count": 91476
+      "count": 484677
     },
     {
       "position": "Posición 11+",
-      "count": 56648
+      "count": 328514
     }
   ],
-  "first_authors": 68613,
-  "total_with_position": 414316,
-  "first_author_percentage": 16.56
+  "first_authors": 305901,
+  "total_with_position": 2086595,
+  "first_author_percentage": 14.66
 }

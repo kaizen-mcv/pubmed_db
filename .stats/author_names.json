@@ -1,118 +1,118 @@
 {
-  "total_unique_authors": 173512,
-  "with_hyphen": 59342,
-  "only_initials": 33795,
-  "full_name": 139717,
-  "with_spanish_particles": 2182,
-  "with_special_chars": 70804,
+  "total_unique_authors": 540354,
+  "with_hyphen": 208385,
+  "only_initials": 80239,
+  "full_name": 460115,
+  "with_spanish_particles": 9454,
+  "with_special_chars": 244243,
   "top_20_lastnames": [
     {
       "lastname": "García",
-      "count": 1421
+      "count": 5954
     },
     {
       "lastname": "Fernández",
-      "count": 1349
+      "count": 5768
     },
     {
       "lastname": "Martínez",
-      "count": 1307
+      "count": 5760
     },
     {
       "lastname": "Moreno",
-      "count": 1193
+      "count": 5641
     },
     {
       "lastname": "Rodríguez",
-      "count": 1166
-    },
-    {
-      "lastname": "Sánchez",
-      "count": 1154
+      "count": 5014
     },
     {
       "lastname": "González",
-      "count": 1072
-    },
-    {
-      "lastname": "Alonso",
-      "count": 1034
+      "count": 4848
     },
     {
       "lastname": "López",
-      "count": 1020
+      "count": 4732
     },
     {
-      "lastname": "Navarro",
-      "count": 990
+      "lastname": "Sánchez",
+      "count": 4652
+    },
+    {
+      "lastname": "Alonso",
+      "count": 4147
     },
     {
       "lastname": "Martín",
-      "count": 975
-    },
-    {
-      "lastname": "Muñoz",
-      "count": 877
+      "count": 3941
     },
     {
       "lastname": "Pérez",
-      "count": 874
+      "count": 3938
     },
     {
-      "lastname": "Hernández",
-      "count": 819
+      "lastname": "Muñoz",
+      "count": 3926
+    },
+    {
+      "lastname": "Navarro",
+      "count": 3894
     },
     {
       "lastname": "Torres",
-      "count": 785
+      "count": 3584
     },
     {
-      "lastname": "Ferrer",
-      "count": 766
+      "lastname": "Hernández",
+      "count": 3417
     },
     {
       "lastname": "Gómez",
-      "count": 764
-    },
-    {
-      "lastname": "Ruiz",
-      "count": 753
+      "count": 3239
     },
     {
       "lastname": "Blanco",
-      "count": 740
+      "count": 3091
+    },
+    {
+      "lastname": "Ruiz",
+      "count": 3081
     },
     {
       "lastname": "Sanz",
-      "count": 738
+      "count": 3079
+    },
+    {
+      "lastname": "Jiménez",
+      "count": 2980
     }
   ],
   "examples_hyphen": [
-    "A, Pons-Fuster",
-    "A Ramos-Arroyo, Maria",
-    "Abab-Jiménez, Zaida",
-    "Abad, José-Luis",
-    "Abad, José-Luís"
+    "A, Alonso-Saladrigues",
+    "A, Arce-Casas",
+    "A Arciniegas-Perasso, Carlos",
+    "A, Ariza-Solè",
+    "A, Barquilla-García"
   ],
   "examples_initials": [
+    "A Cienfuegos, J",
+    "A Criado, Y",
     "A Martin, M",
     "Aagaard Nohr, E",
-    "Aba, E",
-    "Abad, A",
-    "Abad Díaz de Cerio, A"
+    "Aakki, L"
   ],
   "examples_particles": [
-    "Abad Díaz de Cerio, A",
-    "Abad-Grau, María del Mar",
-    "Abajo Del Rincón, María",
-    "Abalos-Aguilera, Maria Del Carmen",
-    "Abaurrea-Ortiz, María Del Pilar"
+    "Á de la Fuente, Miguel",
+    "A, De Salazar",
+    "A, López de Cerain",
+    "Abad de Velasco, Lorenzo",
+    "Abad Díaz de Cerio, A"
   ],
   "percentages": {
-    "with_hyphen": 34.2,
-    "only_initials": 19.48,
-    "full_name": 80.52,
-    "with_spanish_particles": 1.26,
-    "with_special_chars": 40.81
+    "with_hyphen": 38.56,
+    "only_initials": 14.85,
+    "full_name": 85.15,
+    "with_spanish_particles": 1.75,
+    "with_special_chars": 45.2
   }
 }

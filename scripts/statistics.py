@@ -36,7 +36,7 @@ def save_json(filename: str, data: Any):
 
 def get_author_names_stats() -> dict:
     """Estadísticas sobre nombres de autores."""
-    print("\n[1/9] Analizando nombres de autores...")
+    print("\n[1/10] Analizando nombres de autores...")
 
     stats = {}
 
@@ -131,7 +131,7 @@ def get_author_names_stats() -> dict:
 
 def get_productivity_stats() -> dict:
     """Estadísticas de productividad de autores."""
-    print("\n[2/9] Analizando productividad de autores...")
+    print("\n[2/10] Analizando productividad de autores...")
 
     stats = {}
 
@@ -199,7 +199,7 @@ def get_productivity_stats() -> dict:
 
 def get_author_position_stats() -> dict:
     """Estadísticas de posición de autores."""
-    print("\n[3/9] Analizando posición de autores...")
+    print("\n[3/10] Analizando posición de autores...")
 
     stats = {}
 
@@ -251,7 +251,7 @@ def get_author_position_stats() -> dict:
 
 def get_identifiers_stats() -> dict:
     """Estadísticas de identificadores (ORCID, email, DOI)."""
-    print("\n[4/9] Analizando identificadores...")
+    print("\n[4/10] Analizando identificadores...")
 
     stats = {}
 
@@ -295,7 +295,7 @@ def get_identifiers_stats() -> dict:
 
 def get_affiliations_stats() -> dict:
     """Estadísticas de afiliaciones."""
-    print("\n[5/9] Analizando afiliaciones...")
+    print("\n[5/10] Analizando afiliaciones...")
 
     stats = {}
 
@@ -374,7 +374,7 @@ def get_affiliations_stats() -> dict:
 
 def get_temporal_stats() -> dict:
     """Estadísticas temporales."""
-    print("\n[6/9] Analizando distribución temporal...")
+    print("\n[6/10] Analizando distribución temporal...")
 
     stats = {}
 
@@ -426,7 +426,7 @@ def get_temporal_stats() -> dict:
 
 def get_journals_stats() -> dict:
     """Estadísticas de revistas."""
-    print("\n[7/9] Analizando revistas...")
+    print("\n[7/10] Analizando revistas...")
 
     stats = {}
 
@@ -485,7 +485,7 @@ def get_journals_stats() -> dict:
 
 def get_scientific_content_stats() -> dict:
     """Estadísticas de contenido científico (MeSH, keywords, tipos)."""
-    print("\n[8/9] Analizando contenido científico...")
+    print("\n[8/10] Analizando contenido científico...")
 
     stats = {}
 
@@ -591,9 +591,116 @@ def get_summary_stats() -> dict:
     return stats
 
 
+def get_specialty_detection_stats() -> dict:
+    """Estadísticas de detección de especialidades en afiliaciones."""
+    print("\n[10/10] Analizando especialidades en afiliaciones...")
+
+    stats = {}
+
+    # Patrones de especialidades a buscar (español e inglés)
+    specialty_patterns = {
+        'Surgery': ['surgery', 'cirugia'],
+        'Oncology': ['oncology', 'oncologia'],
+        'Neurology': ['neurology', 'neurologia'],
+        'Cardiology': ['cardiology', 'cardiologia'],
+        'Pediatrics': ['pediatric', 'pediatria'],
+        'Internal Medicine': ['internal medicine', 'medicina interna'],
+        'Dermatology': ['dermatolog'],
+        'Hematology': ['hematol'],
+        'Psychiatry': ['psychiatr', 'psiquiatr'],
+        'Ophthalmology': ['ophthalmol', 'oftalmol'],
+        'Endocrinology': ['endocrin'],
+        'Radiology': ['radiology', 'radiologia'],
+        'Gastroenterology': ['gastroenter'],
+        'Intensive Care': ['intensive care', 'intensiv'],
+        'Pulmonology': ['pulmon', 'neumolog'],
+        'Nephrology': ['nephrology', 'nefrologia'],
+        'Rheumatology': ['rheumatol', 'reumatol'],
+        'Anesthesiology': ['anesthes', 'anestes'],
+        'Urology': ['urology', 'urologia'],
+        'Geriatrics': ['geriatr'],
+        'Allergy': ['allergy', 'alergol'],
+        'Immunology': ['immunolog', 'inmunolog'],
+        'Microbiology': ['microbiol'],
+        'Pathology': ['patholog', 'patolog'],
+        'Pharmacology': ['pharmacol', 'farmacol'],
+        'Nuclear Medicine': ['nuclear medicine', 'medicina nuclear'],
+        'Rehabilitation': ['rehabilitation', 'rehabilitacion'],
+        'Family Medicine': ['family medicine', 'medicina familiar'],
+        'Otorhinolaryngology': ['otorhinolaryngol', 'otorrinolaring'],
+        'Orthopedics': ['orthop', 'ortoped'],
+    }
+
+    with db.cursor_context() as cur:
+        # Totales
+        cur.execute("SELECT COUNT(*) FROM pubmed_authors")
+        total_records = cur.fetchone()[0]
+
+        cur.execute("SELECT COUNT(DISTINCT author_name) FROM pubmed_authors")
+        total_unique = cur.fetchone()[0]
+
+        stats['total_author_records'] = total_records
+        stats['total_unique_authors'] = total_unique
+
+        # Construir condición SQL para todas las especialidades
+        conditions = []
+        for patterns in specialty_patterns.values():
+            for p in patterns:
+                conditions.append(f"LOWER(affiliation) LIKE '%{p}%'")
+
+        where_clause = " OR ".join(conditions)
+
+        # Contar registros con especialidad
+        cur.execute(f"""
+            SELECT COUNT(*) FROM pubmed_authors
+            WHERE affiliation IS NOT NULL AND ({where_clause})
+        """)
+        records_with_specialty = cur.fetchone()[0]
+
+        # Contar autores únicos con especialidad
+        cur.execute(f"""
+            SELECT COUNT(DISTINCT author_name) FROM pubmed_authors
+            WHERE affiliation IS NOT NULL AND ({where_clause})
+        """)
+        unique_with_specialty = cur.fetchone()[0]
+
+        stats['records_with_specialty'] = records_with_specialty
+        stats['unique_authors_with_specialty'] = unique_with_specialty
+
+        stats['percentages'] = {
+            'records': round(records_with_specialty / total_records * 100, 2) if total_records > 0 else 0,
+            'unique_authors': round(unique_with_specialty / total_unique * 100, 2) if total_unique > 0 else 0,
+        }
+
+        # Desglose por especialidad
+        specialty_counts = []
+        for specialty, patterns in specialty_patterns.items():
+            pattern_conditions = [f"LOWER(affiliation) LIKE '%{p}%'" for p in patterns]
+            pattern_where = " OR ".join(pattern_conditions)
+
+            cur.execute(f"""
+                SELECT COUNT(DISTINCT author_name)
+                FROM pubmed_authors
+                WHERE affiliation IS NOT NULL AND ({pattern_where})
+            """)
+            count = cur.fetchone()[0]
+            if count > 0:
+                specialty_counts.append({
+                    'specialty': specialty,
+                    'unique_authors': count,
+                    'percentage': round(count / total_unique * 100, 2)
+                })
+
+        stats['by_specialty'] = sorted(
+            specialty_counts, key=lambda x: x['unique_authors'], reverse=True
+        )
+
+    return stats
+
+
 def get_data_completeness_stats() -> dict:
     """Estadísticas de completitud de datos por columna."""
-    print("\n[9/9] Analizando completitud de datos...")
+    print("\n[9/10] Analizando completitud de datos...")
 
     stats = {
         'pubmed_articles': {},
@@ -694,6 +801,7 @@ def main():
         save_json('journals.json', get_journals_stats())
         save_json('scientific_content.json', get_scientific_content_stats())
         save_json('data_completeness.json', get_data_completeness_stats())
+        save_json('specialty_detection.json', get_specialty_detection_stats())
 
         print("\n" + "=" * 60)
         print("COMPLETADO - Estadísticas guardadas en .stats/")
