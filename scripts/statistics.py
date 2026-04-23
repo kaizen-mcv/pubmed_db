@@ -36,19 +36,19 @@ def save_json(filename: str, data: Any):
 
 def get_author_names_stats() -> dict:
     """Estadísticas sobre nombres de autores."""
-    print("\n[1/10] Analizando nombres de autores...")
+    print("\n[1/12] Analizando nombres de autores...")
 
     stats = {}
 
     with db.cursor_context() as cur:
         # Total de autores únicos
-        cur.execute("SELECT COUNT(DISTINCT author_name) FROM pubmed_authors")
+        cur.execute("SELECT COUNT(DISTINCT author_name) FROM raw.pubmed_authors")
         stats['total_unique_authors'] = cur.fetchone()[0]
 
         # Nombres con guion (apellidos compuestos)
         cur.execute("""
             SELECT COUNT(DISTINCT author_name)
-            FROM pubmed_authors
+            FROM raw.pubmed_authors
             WHERE author_name LIKE '%-%'
         """)
         stats['with_hyphen'] = cur.fetchone()[0]
@@ -56,7 +56,7 @@ def get_author_names_stats() -> dict:
         # Solo inicial en nombre (ej: "García, A M", "López, J")
         cur.execute("""
             SELECT COUNT(DISTINCT author_name)
-            FROM pubmed_authors
+            FROM raw.pubmed_authors
             WHERE author_name ~ ', [A-Z]( [A-Z])*$'
         """)
         stats['only_initials'] = cur.fetchone()[0]
@@ -64,7 +64,7 @@ def get_author_names_stats() -> dict:
         # Nombre completo (sin solo iniciales)
         cur.execute("""
             SELECT COUNT(DISTINCT author_name)
-            FROM pubmed_authors
+            FROM raw.pubmed_authors
             WHERE author_name !~ ', [A-Z]( [A-Z])*$'
         """)
         stats['full_name'] = cur.fetchone()[0]
@@ -72,7 +72,7 @@ def get_author_names_stats() -> dict:
         # Apellidos con partículas españolas
         cur.execute("""
             SELECT COUNT(DISTINCT author_name)
-            FROM pubmed_authors
+            FROM raw.pubmed_authors
             WHERE author_name ~* '( de la | del | de los | de las | de )'
         """)
         stats['with_spanish_particles'] = cur.fetchone()[0]
@@ -80,7 +80,7 @@ def get_author_names_stats() -> dict:
         # Caracteres especiales (ñ, tildes)
         cur.execute("""
             SELECT COUNT(DISTINCT author_name)
-            FROM pubmed_authors
+            FROM raw.pubmed_authors
             WHERE author_name ~ '[áéíóúñÁÉÍÓÚÑüÜ]'
         """)
         stats['with_special_chars'] = cur.fetchone()[0]
@@ -88,7 +88,7 @@ def get_author_names_stats() -> dict:
         # Top 10 apellidos más comunes
         cur.execute("""
             SELECT SPLIT_PART(author_name, ',', 1) as lastname, COUNT(*) as count
-            FROM pubmed_authors
+            FROM raw.pubmed_authors
             GROUP BY lastname
             ORDER BY count DESC
             LIMIT 20
@@ -99,19 +99,19 @@ def get_author_names_stats() -> dict:
 
         # Ejemplos de cada categoría
         cur.execute("""
-            SELECT DISTINCT author_name FROM pubmed_authors
+            SELECT DISTINCT author_name FROM raw.pubmed_authors
             WHERE author_name LIKE '%-%' LIMIT 5
         """)
         stats['examples_hyphen'] = [row[0] for row in cur.fetchall()]
 
         cur.execute("""
-            SELECT DISTINCT author_name FROM pubmed_authors
+            SELECT DISTINCT author_name FROM raw.pubmed_authors
             WHERE author_name ~ ', [A-Z]( [A-Z])*$' LIMIT 5
         """)
         stats['examples_initials'] = [row[0] for row in cur.fetchall()]
 
         cur.execute("""
-            SELECT DISTINCT author_name FROM pubmed_authors
+            SELECT DISTINCT author_name FROM raw.pubmed_authors
             WHERE author_name ~* '( de la | del | de los | de las | de )' LIMIT 5
         """)
         stats['examples_particles'] = [row[0] for row in cur.fetchall()]
@@ -131,7 +131,7 @@ def get_author_names_stats() -> dict:
 
 def get_productivity_stats() -> dict:
     """Estadísticas de productividad de autores."""
-    print("\n[2/10] Analizando productividad de autores...")
+    print("\n[2/12] Analizando productividad de autores...")
 
     stats = {}
 
@@ -139,7 +139,7 @@ def get_productivity_stats() -> dict:
         # Top 20 autores más prolíficos
         cur.execute("""
             SELECT author_name, COUNT(DISTINCT pubmed_id) as articles
-            FROM pubmed_authors
+            FROM raw.pubmed_authors
             GROUP BY author_name
             ORDER BY articles DESC
             LIMIT 20
@@ -152,7 +152,7 @@ def get_productivity_stats() -> dict:
         cur.execute("""
             WITH author_counts AS (
                 SELECT author_name, COUNT(DISTINCT pubmed_id) as articles
-                FROM pubmed_authors
+                FROM raw.pubmed_authors
                 GROUP BY author_name
             )
             SELECT
@@ -177,7 +177,7 @@ def get_productivity_stats() -> dict:
         cur.execute("""
             SELECT COUNT(*) FROM (
                 SELECT author_name
-                FROM pubmed_authors
+                FROM raw.pubmed_authors
                 GROUP BY author_name
                 HAVING COUNT(DISTINCT pubmed_id) = 1
             ) t
@@ -188,7 +188,7 @@ def get_productivity_stats() -> dict:
         cur.execute("""
             SELECT AVG(articles) FROM (
                 SELECT COUNT(DISTINCT pubmed_id) as articles
-                FROM pubmed_authors
+                FROM raw.pubmed_authors
                 GROUP BY author_name
             ) t
         """)
@@ -199,7 +199,7 @@ def get_productivity_stats() -> dict:
 
 def get_author_position_stats() -> dict:
     """Estadísticas de posición de autores."""
-    print("\n[3/10] Analizando posición de autores...")
+    print("\n[3/12] Analizando posición de autores...")
 
     stats = {}
 
@@ -216,7 +216,7 @@ def get_author_position_stats() -> dict:
                     ELSE 'Posición 11+'
                 END as position_range,
                 COUNT(*) as count
-            FROM pubmed_authors
+            FROM raw.pubmed_authors
             WHERE author_position IS NOT NULL AND author_position > 0
             GROUP BY position_range
             ORDER BY MIN(author_position)
@@ -227,13 +227,13 @@ def get_author_position_stats() -> dict:
 
         # Total de primeros autores españoles
         cur.execute("""
-            SELECT COUNT(*) FROM pubmed_authors WHERE author_position = 1
+            SELECT COUNT(*) FROM raw.pubmed_authors WHERE author_position = 1
         """)
         stats['first_authors'] = cur.fetchone()[0]
 
         # Total de registros con posición
         cur.execute("""
-            SELECT COUNT(*) FROM pubmed_authors
+            SELECT COUNT(*) FROM raw.pubmed_authors
             WHERE author_position IS NOT NULL AND author_position > 0
         """)
         stats['total_with_position'] = cur.fetchone()[0]
@@ -251,36 +251,36 @@ def get_author_position_stats() -> dict:
 
 def get_identifiers_stats() -> dict:
     """Estadísticas de identificadores (ORCID, email, DOI)."""
-    print("\n[4/10] Analizando identificadores...")
+    print("\n[4/12] Analizando identificadores...")
 
     stats = {}
 
     with db.cursor_context() as cur:
         # Autores con ORCID
-        cur.execute("SELECT COUNT(*) FROM pubmed_authors WHERE author_orcid IS NOT NULL")
+        cur.execute("SELECT COUNT(*) FROM raw.pubmed_authors WHERE author_orcid IS NOT NULL")
         stats['authors_with_orcid'] = cur.fetchone()[0]
 
-        cur.execute("SELECT COUNT(DISTINCT author_name) FROM pubmed_authors WHERE author_orcid IS NOT NULL")
+        cur.execute("SELECT COUNT(DISTINCT author_name) FROM raw.pubmed_authors WHERE author_orcid IS NOT NULL")
         stats['unique_authors_with_orcid'] = cur.fetchone()[0]
 
         # Autores con email
-        cur.execute("SELECT COUNT(*) FROM pubmed_authors WHERE author_email IS NOT NULL")
+        cur.execute("SELECT COUNT(*) FROM raw.pubmed_authors WHERE author_email IS NOT NULL")
         stats['authors_with_email'] = cur.fetchone()[0]
 
-        cur.execute("SELECT COUNT(DISTINCT author_name) FROM pubmed_authors WHERE author_email IS NOT NULL")
+        cur.execute("SELECT COUNT(DISTINCT author_name) FROM raw.pubmed_authors WHERE author_email IS NOT NULL")
         stats['unique_authors_with_email'] = cur.fetchone()[0]
 
         # Artículos con DOI
-        cur.execute("SELECT COUNT(*) FROM pubmed_articles WHERE article_doi IS NOT NULL")
+        cur.execute("SELECT COUNT(*) FROM raw.pubmed_articles WHERE article_doi IS NOT NULL")
         stats['articles_with_doi'] = cur.fetchone()[0]
 
-        cur.execute("SELECT COUNT(*) FROM pubmed_articles")
+        cur.execute("SELECT COUNT(*) FROM raw.pubmed_articles")
         stats['total_articles'] = cur.fetchone()[0]
 
-        cur.execute("SELECT COUNT(*) FROM pubmed_authors")
+        cur.execute("SELECT COUNT(*) FROM raw.pubmed_authors")
         stats['total_author_records'] = cur.fetchone()[0]
 
-        cur.execute("SELECT COUNT(DISTINCT author_name) FROM pubmed_authors")
+        cur.execute("SELECT COUNT(DISTINCT author_name) FROM raw.pubmed_authors")
         stats['total_unique_authors'] = cur.fetchone()[0]
 
     # Porcentajes
@@ -295,7 +295,7 @@ def get_identifiers_stats() -> dict:
 
 def get_affiliations_stats() -> dict:
     """Estadísticas de afiliaciones."""
-    print("\n[5/10] Analizando afiliaciones...")
+    print("\n[5/12] Analizando afiliaciones...")
 
     stats = {}
 
@@ -303,7 +303,7 @@ def get_affiliations_stats() -> dict:
         # Top instituciones (simplificado - primeras palabras)
         cur.execute("""
             SELECT affiliation, COUNT(*) as count
-            FROM pubmed_authors
+            FROM raw.pubmed_authors
             WHERE affiliation IS NOT NULL
             GROUP BY affiliation
             ORDER BY count DESC
@@ -323,7 +323,7 @@ def get_affiliations_stats() -> dict:
         for city in cities:
             cur.execute("""
                 SELECT COUNT(DISTINCT pubmed_id)
-                FROM pubmed_authors
+                FROM raw.pubmed_authors
                 WHERE affiliation ILIKE %s
             """, (f'%{city}%',))
             count = cur.fetchone()[0]
@@ -337,7 +337,7 @@ def get_affiliations_stats() -> dict:
         # CIBER (Centro de Investigación Biomédica en Red)
         cur.execute("""
             SELECT COUNT(DISTINCT pubmed_id)
-            FROM pubmed_authors
+            FROM raw.pubmed_authors
             WHERE affiliation ILIKE '%CIBER%'
         """)
         stats['ciber_articles'] = cur.fetchone()[0]
@@ -345,7 +345,7 @@ def get_affiliations_stats() -> dict:
         # Universidades
         cur.execute("""
             SELECT COUNT(DISTINCT pubmed_id)
-            FROM pubmed_authors
+            FROM raw.pubmed_authors
             WHERE affiliation ILIKE '%University%' OR affiliation ILIKE '%Universidad%'
                 OR affiliation ILIKE '%Universitat%'
         """)
@@ -354,13 +354,13 @@ def get_affiliations_stats() -> dict:
         # Hospitales
         cur.execute("""
             SELECT COUNT(DISTINCT pubmed_id)
-            FROM pubmed_authors
+            FROM raw.pubmed_authors
             WHERE affiliation ILIKE '%Hospital%'
         """)
         stats['hospital_articles'] = cur.fetchone()[0]
 
         # Total de artículos
-        cur.execute("SELECT COUNT(*) FROM pubmed_articles")
+        cur.execute("SELECT COUNT(*) FROM raw.pubmed_articles")
         total = cur.fetchone()[0]
 
         stats['percentages'] = {
@@ -374,7 +374,7 @@ def get_affiliations_stats() -> dict:
 
 def get_temporal_stats() -> dict:
     """Estadísticas temporales."""
-    print("\n[6/10] Analizando distribución temporal...")
+    print("\n[6/12] Analizando distribución temporal...")
 
     stats = {}
 
@@ -382,7 +382,7 @@ def get_temporal_stats() -> dict:
         # Artículos por año
         cur.execute("""
             SELECT EXTRACT(YEAR FROM publication_date)::int as year, COUNT(*) as count
-            FROM pubmed_articles
+            FROM raw.pubmed_articles
             WHERE publication_date IS NOT NULL
             GROUP BY year
             ORDER BY year
@@ -394,7 +394,7 @@ def get_temporal_stats() -> dict:
         # Artículos por mes (agregado de todos los años)
         cur.execute("""
             SELECT EXTRACT(MONTH FROM publication_date)::int as month, COUNT(*) as count
-            FROM pubmed_articles
+            FROM raw.pubmed_articles
             WHERE publication_date IS NOT NULL
             GROUP BY month
             ORDER BY month
@@ -408,7 +408,7 @@ def get_temporal_stats() -> dict:
         # Rango de fechas
         cur.execute("""
             SELECT MIN(publication_date), MAX(publication_date)
-            FROM pubmed_articles
+            FROM raw.pubmed_articles
             WHERE publication_date IS NOT NULL
         """)
         row = cur.fetchone()
@@ -418,7 +418,7 @@ def get_temporal_stats() -> dict:
         }
 
         # Artículos sin fecha
-        cur.execute("SELECT COUNT(*) FROM pubmed_articles WHERE publication_date IS NULL")
+        cur.execute("SELECT COUNT(*) FROM raw.pubmed_articles WHERE publication_date IS NULL")
         stats['without_date'] = cur.fetchone()[0]
 
     return stats
@@ -426,7 +426,7 @@ def get_temporal_stats() -> dict:
 
 def get_journals_stats() -> dict:
     """Estadísticas de revistas."""
-    print("\n[7/10] Analizando revistas...")
+    print("\n[7/12] Analizando revistas...")
 
     stats = {}
 
@@ -434,7 +434,7 @@ def get_journals_stats() -> dict:
         # Top 30 revistas
         cur.execute("""
             SELECT journal_name, COUNT(*) as count
-            FROM pubmed_articles
+            FROM raw.pubmed_articles
             WHERE journal_name IS NOT NULL
             GROUP BY journal_name
             ORDER BY count DESC
@@ -445,21 +445,21 @@ def get_journals_stats() -> dict:
         ]
 
         # Total de revistas únicas
-        cur.execute("SELECT COUNT(DISTINCT journal_name) FROM pubmed_articles WHERE journal_name IS NOT NULL")
+        cur.execute("SELECT COUNT(DISTINCT journal_name) FROM raw.pubmed_articles WHERE journal_name IS NOT NULL")
         stats['unique_journals'] = cur.fetchone()[0]
 
         # Revistas con ISSN vs sin ISSN
-        cur.execute("SELECT COUNT(*) FROM pubmed_articles WHERE journal_issn IS NOT NULL")
+        cur.execute("SELECT COUNT(*) FROM raw.pubmed_articles WHERE journal_issn IS NOT NULL")
         stats['with_issn'] = cur.fetchone()[0]
 
-        cur.execute("SELECT COUNT(*) FROM pubmed_articles WHERE journal_issn IS NULL")
+        cur.execute("SELECT COUNT(*) FROM raw.pubmed_articles WHERE journal_issn IS NULL")
         stats['without_issn'] = cur.fetchone()[0]
 
         # Distribución de artículos por revista
         cur.execute("""
             WITH journal_counts AS (
                 SELECT journal_name, COUNT(*) as articles
-                FROM pubmed_articles
+                FROM raw.pubmed_articles
                 WHERE journal_name IS NOT NULL
                 GROUP BY journal_name
             )
@@ -485,14 +485,14 @@ def get_journals_stats() -> dict:
 
 def get_scientific_content_stats() -> dict:
     """Estadísticas de contenido científico (MeSH, keywords, tipos)."""
-    print("\n[8/10] Analizando contenido científico...")
+    print("\n[8/12] Analizando contenido científico...")
 
     stats = {}
 
     with db.cursor_context() as cur:
         # Top MeSH terms
         cur.execute("""
-            SELECT mesh_terms FROM pubmed_articles WHERE mesh_terms IS NOT NULL
+            SELECT mesh_terms FROM raw.pubmed_articles WHERE mesh_terms IS NOT NULL
         """)
         mesh_counter = Counter()
         for row in cur.fetchall():
@@ -506,7 +506,7 @@ def get_scientific_content_stats() -> dict:
 
         # Tipos de publicación
         cur.execute("""
-            SELECT publication_types FROM pubmed_articles WHERE publication_types IS NOT NULL
+            SELECT publication_types FROM raw.pubmed_articles WHERE publication_types IS NOT NULL
         """)
         type_counter = Counter()
         for row in cur.fetchall():
@@ -520,7 +520,7 @@ def get_scientific_content_stats() -> dict:
 
         # Top keywords de autor
         cur.execute("""
-            SELECT author_keywords FROM pubmed_articles WHERE author_keywords IS NOT NULL
+            SELECT author_keywords FROM raw.pubmed_articles WHERE author_keywords IS NOT NULL
         """)
         keyword_counter = Counter()
         for row in cur.fetchall():
@@ -533,16 +533,16 @@ def get_scientific_content_stats() -> dict:
         ]
 
         # Completitud de datos
-        cur.execute("SELECT COUNT(*) FROM pubmed_articles")
+        cur.execute("SELECT COUNT(*) FROM raw.pubmed_articles")
         total = cur.fetchone()[0]
 
-        cur.execute("SELECT COUNT(*) FROM pubmed_articles WHERE article_abstract IS NOT NULL")
+        cur.execute("SELECT COUNT(*) FROM raw.pubmed_articles WHERE article_abstract IS NOT NULL")
         with_abstract = cur.fetchone()[0]
 
-        cur.execute("SELECT COUNT(*) FROM pubmed_articles WHERE mesh_terms IS NOT NULL")
+        cur.execute("SELECT COUNT(*) FROM raw.pubmed_articles WHERE mesh_terms IS NOT NULL")
         with_mesh = cur.fetchone()[0]
 
-        cur.execute("SELECT COUNT(*) FROM pubmed_articles WHERE author_keywords IS NOT NULL")
+        cur.execute("SELECT COUNT(*) FROM raw.pubmed_articles WHERE author_keywords IS NOT NULL")
         with_keywords = cur.fetchone()[0]
 
         stats['data_completeness'] = {
@@ -567,19 +567,19 @@ def get_summary_stats() -> dict:
     stats = {}
 
     with db.cursor_context() as cur:
-        cur.execute("SELECT COUNT(*) FROM pubmed_articles")
+        cur.execute("SELECT COUNT(*) FROM raw.pubmed_articles")
         stats['total_articles'] = cur.fetchone()[0]
 
-        cur.execute("SELECT COUNT(*) FROM pubmed_authors")
+        cur.execute("SELECT COUNT(*) FROM raw.pubmed_authors")
         stats['total_author_records'] = cur.fetchone()[0]
 
-        cur.execute("SELECT COUNT(DISTINCT author_name) FROM pubmed_authors")
+        cur.execute("SELECT COUNT(DISTINCT author_name) FROM raw.pubmed_authors")
         stats['unique_authors'] = cur.fetchone()[0]
 
-        cur.execute("SELECT COUNT(DISTINCT journal_name) FROM pubmed_articles")
+        cur.execute("SELECT COUNT(DISTINCT journal_name) FROM raw.pubmed_articles")
         stats['unique_journals'] = cur.fetchone()[0]
 
-        cur.execute("SELECT MIN(publication_date), MAX(publication_date) FROM pubmed_articles")
+        cur.execute("SELECT MIN(publication_date), MAX(publication_date) FROM raw.pubmed_articles")
         row = cur.fetchone()
         stats['date_range'] = {
             'from': str(row[0]) if row[0] else None,
@@ -591,75 +591,102 @@ def get_summary_stats() -> dict:
     return stats
 
 
-def get_specialty_detection_stats() -> dict:
-    """Estadísticas de detección de especialidades en afiliaciones."""
-    print("\n[10/10] Analizando especialidades en afiliaciones...")
+def get_attr_tables_stats() -> dict:
+    """Estadísticas de las tablas de atributos normalizados (sm_attr)."""
+    print("\n[10/12] Analizando tablas de atributos normalizados...")
 
     stats = {}
 
-    # Patrones de especialidades a buscar (español e inglés)
-    specialty_patterns = {
-        'Surgery': ['surgery', 'cirugia'],
-        'Oncology': ['oncology', 'oncologia'],
-        'Neurology': ['neurology', 'neurologia'],
-        'Cardiology': ['cardiology', 'cardiologia'],
-        'Pediatrics': ['pediatric', 'pediatria'],
-        'Internal Medicine': ['internal medicine', 'medicina interna'],
-        'Dermatology': ['dermatolog'],
-        'Hematology': ['hematol'],
-        'Psychiatry': ['psychiatr', 'psiquiatr'],
-        'Ophthalmology': ['ophthalmol', 'oftalmol'],
-        'Endocrinology': ['endocrin'],
-        'Radiology': ['radiology', 'radiologia'],
-        'Gastroenterology': ['gastroenter'],
-        'Intensive Care': ['intensive care', 'intensiv'],
-        'Pulmonology': ['pulmon', 'neumolog'],
-        'Nephrology': ['nephrology', 'nefrologia'],
-        'Rheumatology': ['rheumatol', 'reumatol'],
-        'Anesthesiology': ['anesthes', 'anestes'],
-        'Urology': ['urology', 'urologia'],
-        'Geriatrics': ['geriatr'],
-        'Allergy': ['allergy', 'alergol'],
-        'Immunology': ['immunolog', 'inmunolog'],
-        'Microbiology': ['microbiol'],
-        'Pathology': ['patholog', 'patolog'],
-        'Pharmacology': ['pharmacol', 'farmacol'],
-        'Nuclear Medicine': ['nuclear medicine', 'medicina nuclear'],
-        'Rehabilitation': ['rehabilitation', 'rehabilitacion'],
-        'Family Medicine': ['family medicine', 'medicina familiar'],
-        'Otorhinolaryngology': ['otorhinolaryngol', 'otorrinolaring'],
-        'Orthopedics': ['orthop', 'ortoped'],
-    }
+    with db.cursor_context() as cur:
+        # sm_attr.journals
+        cur.execute("SELECT COUNT(*) FROM sm_attr.journals")
+        stats['journals'] = {
+            'total': cur.fetchone()[0],
+        }
+        cur.execute("SELECT journal_name, article_count FROM sm_attr.journals ORDER BY article_count DESC LIMIT 10")
+        stats['journals']['top_10'] = [
+            {'journal': row[0], 'articles': row[1]} for row in cur.fetchall()
+        ]
+
+        # sm_attr.keywords
+        cur.execute("SELECT COUNT(*) FROM sm_attr.keywords")
+        stats['keywords'] = {
+            'total': cur.fetchone()[0],
+        }
+        cur.execute("SELECT keyword_text, article_count FROM sm_attr.keywords ORDER BY article_count DESC LIMIT 20")
+        stats['keywords']['top_20'] = [
+            {'keyword': row[0], 'articles': row[1]} for row in cur.fetchall()
+        ]
+
+        # sm_attr.affiliations
+        cur.execute("SELECT COUNT(*) FROM sm_attr.affiliations")
+        stats['affiliations'] = {
+            'total': cur.fetchone()[0],
+        }
+        cur.execute("SELECT LEFT(affiliation_text, 150), author_count FROM sm_attr.affiliations ORDER BY author_count DESC LIMIT 10")
+        stats['affiliations']['top_10'] = [
+            {'affiliation': row[0], 'authors': row[1]} for row in cur.fetchall()
+        ]
+
+        # sm_attr.mesh_terms_articles
+        cur.execute("SELECT COUNT(*) FROM sm_attr.mesh_terms_articles")
+        stats['mesh_terms_articles'] = {
+            'total': cur.fetchone()[0],
+        }
+        cur.execute("SELECT mesh_term_text, article_count FROM sm_attr.mesh_terms_articles ORDER BY article_count DESC LIMIT 20")
+        stats['mesh_terms_articles']['top_20'] = [
+            {'mesh_term': row[0], 'articles': row[1]} for row in cur.fetchall()
+        ]
+
+    return stats
+
+
+def get_specialty_detection_stats() -> dict:
+    """Estadísticas de detección de especialidades SNOMED en afiliaciones."""
+    print("\n[12/12] Analizando especialidades SNOMED en afiliaciones...")
+
+    stats = {}
 
     with db.cursor_context() as cur:
         # Totales
-        cur.execute("SELECT COUNT(*) FROM pubmed_authors")
+        cur.execute("SELECT COUNT(*) FROM raw.pubmed_authors")
         total_records = cur.fetchone()[0]
 
-        cur.execute("SELECT COUNT(DISTINCT author_name) FROM pubmed_authors")
+        cur.execute("SELECT COUNT(DISTINCT author_name) FROM raw.pubmed_authors")
         total_unique = cur.fetchone()[0]
 
         stats['total_author_records'] = total_records
         stats['total_unique_authors'] = total_unique
 
-        # Construir condición SQL para todas las especialidades
+        # Obtener especialidades SNOMED reales (solo name_en y name_es)
+        cur.execute("""
+            SELECT snomed_code, name_en, name_es
+            FROM vocab.snomed_specialties
+            WHERE name_en IS NOT NULL
+            ORDER BY name_en
+        """)
+        snomed_specialties = cur.fetchall()
+
+        # Construir condiciones usando solo nombres SNOMED oficiales
         conditions = []
-        for patterns in specialty_patterns.values():
-            for p in patterns:
-                conditions.append(f"LOWER(affiliation) LIKE '%{p}%'")
+        for code, name_en, name_es in snomed_specialties:
+            if name_en:
+                conditions.append(f"LOWER(affiliation) LIKE '%{name_en.lower()}%'")
+            if name_es:
+                conditions.append(f"LOWER(affiliation) LIKE '%{name_es.lower()}%'")
 
         where_clause = " OR ".join(conditions)
 
-        # Contar registros con especialidad
+        # Contar registros con especialidad SNOMED
         cur.execute(f"""
-            SELECT COUNT(*) FROM pubmed_authors
+            SELECT COUNT(*) FROM raw.pubmed_authors
             WHERE affiliation IS NOT NULL AND ({where_clause})
         """)
         records_with_specialty = cur.fetchone()[0]
 
-        # Contar autores únicos con especialidad
+        # Contar autores únicos con especialidad SNOMED
         cur.execute(f"""
-            SELECT COUNT(DISTINCT author_name) FROM pubmed_authors
+            SELECT COUNT(DISTINCT author_name) FROM raw.pubmed_authors
             WHERE affiliation IS NOT NULL AND ({where_clause})
         """)
         unique_with_specialty = cur.fetchone()[0]
@@ -672,21 +699,31 @@ def get_specialty_detection_stats() -> dict:
             'unique_authors': round(unique_with_specialty / total_unique * 100, 2) if total_unique > 0 else 0,
         }
 
-        # Desglose por especialidad
+        # Desglose por especialidad SNOMED
         specialty_counts = []
-        for specialty, patterns in specialty_patterns.items():
-            pattern_conditions = [f"LOWER(affiliation) LIKE '%{p}%'" for p in patterns]
+        for code, name_en, name_es in snomed_specialties:
+            pattern_conditions = []
+            if name_en:
+                pattern_conditions.append(f"LOWER(affiliation) LIKE '%{name_en.lower()}%'")
+            if name_es:
+                pattern_conditions.append(f"LOWER(affiliation) LIKE '%{name_es.lower()}%'")
+
+            if not pattern_conditions:
+                continue
+
             pattern_where = " OR ".join(pattern_conditions)
 
             cur.execute(f"""
                 SELECT COUNT(DISTINCT author_name)
-                FROM pubmed_authors
+                FROM raw.pubmed_authors
                 WHERE affiliation IS NOT NULL AND ({pattern_where})
             """)
             count = cur.fetchone()[0]
             if count > 0:
                 specialty_counts.append({
-                    'specialty': specialty,
+                    'snomed_code': code,
+                    'specialty_en': name_en,
+                    'specialty_es': name_es,
                     'unique_authors': count,
                     'percentage': round(count / total_unique * 100, 2)
                 })
@@ -695,12 +732,15 @@ def get_specialty_detection_stats() -> dict:
             specialty_counts, key=lambda x: x['unique_authors'], reverse=True
         )
 
+        stats['snomed_specialties_total'] = len(snomed_specialties)
+        stats['snomed_specialties_detected'] = len(specialty_counts)
+
     return stats
 
 
 def get_data_completeness_stats() -> dict:
     """Estadísticas de completitud de datos por columna."""
-    print("\n[9/10] Analizando completitud de datos...")
+    print("\n[9/12] Analizando completitud de datos...")
 
     stats = {
         'pubmed_articles': {},
@@ -709,7 +749,7 @@ def get_data_completeness_stats() -> dict:
 
     with db.cursor_context() as cur:
         # Total de artículos
-        cur.execute("SELECT COUNT(*) FROM pubmed_articles")
+        cur.execute("SELECT COUNT(*) FROM raw.pubmed_articles")
         total_articles = cur.fetchone()[0]
 
         # Columnas de la tabla pubmed_articles
@@ -735,11 +775,11 @@ def get_data_completeness_stats() -> dict:
             if col == 'pubmed_id':
                 count = total_articles
             elif col in text_columns:
-                cur.execute(f"SELECT COUNT(*) FROM pubmed_articles WHERE {col} IS NOT NULL AND {col} != ''")
+                cur.execute(f"SELECT COUNT(*) FROM raw.pubmed_articles WHERE {col} IS NOT NULL AND {col} != ''")
                 count = cur.fetchone()[0]
             else:
                 # Para DATE y otros tipos no-texto
-                cur.execute(f"SELECT COUNT(*) FROM pubmed_articles WHERE {col} IS NOT NULL")
+                cur.execute(f"SELECT COUNT(*) FROM raw.pubmed_articles WHERE {col} IS NOT NULL")
                 count = cur.fetchone()[0]
 
             stats['pubmed_articles'][col] = {
@@ -749,7 +789,7 @@ def get_data_completeness_stats() -> dict:
             }
 
         # Total de registros de autores
-        cur.execute("SELECT COUNT(*) FROM pubmed_authors")
+        cur.execute("SELECT COUNT(*) FROM raw.pubmed_authors")
         total_authors = cur.fetchone()[0]
 
         # Columnas de la tabla pubmed_authors
@@ -765,11 +805,11 @@ def get_data_completeness_stats() -> dict:
         for col in authors_columns:
             # Para pubmed_id y author_name, verificar NOT NULL
             if col in ['pubmed_id', 'author_name']:
-                cur.execute(f"SELECT COUNT(*) FROM pubmed_authors WHERE {col} IS NOT NULL")
+                cur.execute(f"SELECT COUNT(*) FROM raw.pubmed_authors WHERE {col} IS NOT NULL")
             elif col == 'author_position':
-                cur.execute(f"SELECT COUNT(*) FROM pubmed_authors WHERE {col} IS NOT NULL AND {col} > 0")
+                cur.execute(f"SELECT COUNT(*) FROM raw.pubmed_authors WHERE {col} IS NOT NULL AND {col} > 0")
             else:
-                cur.execute(f"SELECT COUNT(*) FROM pubmed_authors WHERE {col} IS NOT NULL AND {col} != ''")
+                cur.execute(f"SELECT COUNT(*) FROM raw.pubmed_authors WHERE {col} IS NOT NULL AND {col} != ''")
             count = cur.fetchone()[0]
 
             stats['pubmed_authors'][col] = {
@@ -801,6 +841,7 @@ def main():
         save_json('journals.json', get_journals_stats())
         save_json('scientific_content.json', get_scientific_content_stats())
         save_json('data_completeness.json', get_data_completeness_stats())
+        save_json('attr_tables.json', get_attr_tables_stats())
         save_json('specialty_detection.json', get_specialty_detection_stats())
 
         print("\n" + "=" * 60)

@@ -1,15 +1,19 @@
 -- Tabla de mapeo MeSH Tree Number → SNOMED CT Specialty
 -- Permite clasificar artículos por especialidad médica basándose en sus términos MeSH
 -- Fuente: Mapeo manual basado en categorías MeSH (https://meshb.nlm.nih.gov/treeView)
+-- Schema: vocab (vocabulario médico controlado)
+
+-- Crear schema si no existe
+CREATE SCHEMA IF NOT EXISTS vocab;
 
 -- Eliminar tabla existente
-DROP TABLE IF EXISTS mesh_to_snomed CASCADE;
+DROP TABLE IF EXISTS vocab.mesh_to_snomed CASCADE;
 
 -- Crear tabla de mapeo
-CREATE TABLE mesh_to_snomed (
-    id SERIAL PRIMARY KEY,
+CREATE TABLE vocab.mesh_to_snomed (
+    sm_mesh_mapping_id SERIAL PRIMARY KEY,
     mesh_tree_prefix VARCHAR(20) NOT NULL,           -- Prefijo del tree number (ej: "C14", "C14.280")
-    snomed_code VARCHAR(20) NOT NULL REFERENCES snomed_specialties(snomed_code),
+    snomed_code VARCHAR(20) NOT NULL REFERENCES vocab.snomed_specialties(snomed_code),
     description VARCHAR(200),                         -- Descripción de la categoría MeSH
     confidence DECIMAL(3,2) DEFAULT 0.90,            -- Confianza del mapeo (0.00-1.00)
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -20,7 +24,7 @@ CREATE TABLE mesh_to_snomed (
 -- MAPEOS POR CATEGORÍA MeSH (C = Diseases)
 -- =====================================================
 
-INSERT INTO mesh_to_snomed (mesh_tree_prefix, snomed_code, description, confidence) VALUES
+INSERT INTO vocab.mesh_to_snomed (mesh_tree_prefix, snomed_code, description, confidence) VALUES
 -- C01: Bacterial Infections and Mycoses → Infectious diseases / Microbiology
 ('C01', '394807007', 'Bacterial Infections and Mycoses', 0.85),
 ('C01', '408454008', 'Bacterial Infections and Mycoses', 0.80),
@@ -341,21 +345,21 @@ INSERT INTO mesh_to_snomed (mesh_tree_prefix, snomed_code, description, confiden
 -- ÍNDICES
 -- =====================================================
 
-CREATE INDEX idx_mesh_to_snomed_prefix ON mesh_to_snomed(mesh_tree_prefix);
-CREATE INDEX idx_mesh_to_snomed_snomed ON mesh_to_snomed(snomed_code);
+CREATE INDEX idx_mesh_to_snomed_prefix ON vocab.mesh_to_snomed(mesh_tree_prefix);
+CREATE INDEX idx_mesh_to_snomed_snomed ON vocab.mesh_to_snomed(snomed_code);
 
 -- Índice para búsquedas por prefijo (LIKE 'C14%')
-CREATE INDEX idx_mesh_to_snomed_prefix_pattern ON mesh_to_snomed(mesh_tree_prefix varchar_pattern_ops);
+CREATE INDEX idx_mesh_to_snomed_prefix_pattern ON vocab.mesh_to_snomed(mesh_tree_prefix varchar_pattern_ops);
 
 -- =====================================================
 -- COMENTARIOS DE DOCUMENTACIÓN
 -- =====================================================
 
-COMMENT ON TABLE mesh_to_snomed IS 'Mapeo de prefijos MeSH Tree Number a códigos SNOMED CT de especialidades médicas';
-COMMENT ON COLUMN mesh_to_snomed.mesh_tree_prefix IS 'Prefijo del tree number MeSH (ej: C14, C14.280). Un artículo con MeSH tree C14.280.647 matchea con C14.280 y C14';
-COMMENT ON COLUMN mesh_to_snomed.snomed_code IS 'Código SNOMED CT de la especialidad médica';
-COMMENT ON COLUMN mesh_to_snomed.description IS 'Descripción de la categoría MeSH';
-COMMENT ON COLUMN mesh_to_snomed.confidence IS 'Nivel de confianza del mapeo (0.00-1.00). Mapeos directos ~0.90, mapeos secundarios ~0.70';
+COMMENT ON TABLE vocab.mesh_to_snomed IS 'Mapeo de prefijos MeSH Tree Number a códigos SNOMED CT de especialidades médicas';
+COMMENT ON COLUMN vocab.mesh_to_snomed.mesh_tree_prefix IS 'Prefijo del tree number MeSH (ej: C14, C14.280). Un artículo con MeSH tree C14.280.647 matchea con C14.280 y C14';
+COMMENT ON COLUMN vocab.mesh_to_snomed.snomed_code IS 'Código SNOMED CT de la especialidad médica';
+COMMENT ON COLUMN vocab.mesh_to_snomed.description IS 'Descripción de la categoría MeSH';
+COMMENT ON COLUMN vocab.mesh_to_snomed.confidence IS 'Nivel de confianza del mapeo (0.00-1.00). Mapeos directos ~0.90, mapeos secundarios ~0.70';
 
 -- =====================================================
 -- FUNCIÓN AUXILIAR: Encontrar especialidades para un tree number
@@ -379,8 +383,8 @@ BEGIN
         ms.name_snomed::VARCHAR,
         ms.name_es::VARCHAR,
         m.confidence
-    FROM mesh_to_snomed m
-    JOIN snomed_specialties ms ON m.snomed_code = ms.snomed_code
+    FROM vocab.mesh_to_snomed m
+    JOIN vocab.snomed_specialties ms ON m.snomed_code = ms.snomed_code
     WHERE tree_number LIKE m.mesh_tree_prefix || '%'
     ORDER BY LENGTH(m.mesh_tree_prefix) DESC, m.confidence DESC;
 END;

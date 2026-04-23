@@ -44,23 +44,23 @@ pubmed/
 │   │
 │   ├── services/               # Lógica de negocio
 │   │   ├── article_service.py  # Orquestación guardado
-│   │   └── specialty_service.py # Inferencia de especialidades
+│   │   └── specialty_service.py # Inferencia de especialidades (solo afiliaciones)
 │   │
 │   └── utils/                  # Utilidades
 │       └── logger.py           # Sistema de logging centralizado
 │
 ├── scripts/                    # Scripts ejecutables
-│   ├── create_tables.sql               # Esquema BD principal
-│   ├── create_specialties_table.sql    # Tabla SNOMED specialties
-│   ├── create_mesh_table.sql           # Tabla términos MeSH
-│   ├── create_mesh_snomed_mapping.sql  # Mapeo MeSH → SNOMED
-│   ├── create_specialty_mappings.sql   # Tablas de mapeo adicionales
+│   ├── create_tables.sql               # Esquema BD principal (raw.*)
+│   ├── create_attr_tables.sql          # Tablas atributos (sm_attr.*)
+│   ├── create_specialties_table.sql    # Tabla SNOMED (vocab.snomed_specialties)
+│   ├── create_mesh_table.sql           # Tabla términos MeSH (vocab.nlm_mesh_terms)
+│   ├── create_mesh_snomed_mapping.sql  # Mapeo MeSH→SNOMED (vocab.mesh_to_snomed)
+│   ├── create_specialty_mappings.sql   # Mapeo afiliación→SNOMED (sm_maps.*)
+│   ├── create_author_specialties.sql   # Resultado (sm_result.author_specialties)
 │   ├── download_pubmed.py              # Descarga de artículos
 │   ├── import_mesh_terms.py            # Importar términos MeSH
 │   ├── sync_snomed_specialties.py      # Sincronizar con API FHIR
-│   ├── populate_specialty_synonyms.py  # Poblar sinónimos MIR
-│   ├── populate_specialty_mappings.py  # Poblar mapeos SNOMED
-│   ├── create_author_specialties.sql   # Tabla especialidades por autor
+│   ├── populate_specialty_mappings.py  # Poblar mapeo afiliación→SNOMED
 │   ├── populate_author_specialties.py  # Poblar especialidades de autores
 │   ├── cron_update.py                  # Script para CRON (actualización diaria)
 │   └── statistics.py                   # Estadísticas de la BD
@@ -75,11 +75,41 @@ pubmed/
 
 ---
 
+## Organización por Schemas PostgreSQL
+
+La base de datos está organizada en 5 schemas para separar responsabilidades:
+
+```
+raw       → Datos brutos de PubMed (pubmed_articles, pubmed_authors)
+sm_attr   → Atributos normalizados (journals, keywords, affiliations, mesh_terms_articles)
+vocab     → Vocabulario médico controlado (snomed_specialties, nlm_mesh_terms, mesh_to_snomed)
+sm_maps   → Mapeo afiliación→SNOMED (affiliation_to_snomed)
+sm_result → Resultados finales (author_specialties)
+```
+
+### Resumen de Tablas
+
+| Schema | Tabla | Registros | Descripción |
+|--------|-------|-----------|-------------|
+| `raw` | pubmed_articles | ~471K | Artículos de PubMed |
+| `raw` | pubmed_authors | ~2M | Autores españoles |
+| `sm_attr` | journals | ~8K | Revistas únicas |
+| `sm_attr` | keywords | ~568K | Keywords de autores |
+| `sm_attr` | affiliations | ~932K | Afiliaciones únicas |
+| `sm_attr` | mesh_terms_articles | ~25K | MeSH terms únicos |
+| `vocab` | snomed_specialties | 117 | Especialidades SNOMED |
+| `vocab` | nlm_mesh_terms | ~31K | Vocabulario MeSH |
+| `vocab` | mesh_to_snomed | 159 | Mapeo MeSH→SNOMED |
+| `sm_maps` | affiliation_to_snomed | - | Afiliación→Especialidad |
+| `sm_result` | author_specialties | - | Especialidades por autor |
+
+---
+
 ## Esquema de Base de Datos
 
-### Tablas Principales
+### Tablas Principales (Schema: `raw`)
 
-#### Tabla: `pubmed_articles`
+#### Tabla: `raw.pubmed_articles`
 
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
@@ -95,13 +125,13 @@ pubmed/
 | `author_keywords` | TEXT | Palabras clave del autor |
 | `created_at` | TIMESTAMP | Fecha de inserción |
 
-#### Tabla: `pubmed_authors`
+#### Tabla: `raw.pubmed_authors`
 
 Solo se guardan autores con afiliación española.
 
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
-| `id` | SERIAL (PK) | ID auto-generado |
+| `sm_author_id` | SERIAL (PK) | ID auto-generado |
 | `pubmed_id` | INTEGER (FK) | Referencia al artículo |
 | `author_name` | VARCHAR(500) | Nombre: "Apellido, Nombre" |
 | `author_position` | INTEGER | Posición (1=primer autor) |
@@ -112,9 +142,9 @@ Solo se guardan autores con afiliación española.
 
 ---
 
-### Tablas SNOMED CT (Especialidades Médicas)
+### Tablas SNOMED CT (Schema: `vocab`)
 
-#### Tabla: `snomed_specialties`
+#### Tabla: `vocab.snomed_specialties`
 
 Especialidades médicas según estándar SNOMED CT / HL7 FHIR.
 
@@ -125,7 +155,6 @@ Especialidades médicas según estándar SNOMED CT / HL7 FHIR.
 | `name_en` | VARCHAR(200) | Nombre simplificado inglés |
 | `name_snomed` | VARCHAR(200) | Nombre oficial FHIR (con "qualifier value") |
 | `name_es` | VARCHAR(200) | Traducción al español |
-| `synonyms` | TEXT | Sinónimos para matching (separados por ;) |
 | `is_mir_spain` | BOOLEAN | TRUE si es especialidad MIR española |
 | `created_at` | TIMESTAMP | Fecha de creación |
 | `last_checked` | DATE | Última sincronización con API FHIR |
@@ -133,9 +162,8 @@ Especialidades médicas según estándar SNOMED CT / HL7 FHIR.
 **Notas:**
 - 117 especialidades SNOMED CT totales
 - 45 especialidades MIR españolas (con `is_mir_spain = TRUE`)
-- Sinónimos solo para especialidades MIR (exclusivos, sin solapamiento)
 
-#### Tabla: `nlm_mesh_terms`
+#### Tabla: `vocab.nlm_mesh_terms`
 
 Vocabulario controlado MeSH de la NLM (National Library of Medicine).
 
@@ -149,7 +177,7 @@ Vocabulario controlado MeSH de la NLM (National Library of Medicine).
 | `year_introduced` | INTEGER | Año de introducción |
 | `created_at` | TIMESTAMP | Fecha de inserción |
 
-#### Tabla: `mesh_to_snomed`
+#### Tabla: `vocab.mesh_to_snomed`
 
 Mapeo de términos MeSH a especialidades SNOMED.
 
@@ -163,31 +191,39 @@ Mapeo de términos MeSH a especialidades SNOMED.
 
 ---
 
-### Tablas de Mapeo Adicionales
+### Tabla de Mapeo (Schema: `sm_maps`)
 
-Para inferir especialidades desde diferentes fuentes:
+#### Tabla: `sm_maps.affiliation_to_snomed`
 
-| Tabla | Descripción |
-|-------|-------------|
-| `journal_to_snomed` | Revistas → Especialidades |
-| `affiliation_to_snomed` | Afiliaciones → Especialidades |
-| `keyword_to_snomed` | Palabras clave → Especialidades |
-| `title_pattern_to_snomed` | Patrones en títulos → Especialidades |
-| `abstract_pattern_to_snomed` | Patrones en abstracts → Especialidades |
+Mapea afiliaciones de autores a especialidades SNOMED.
 
-#### Tabla: `author_specialties`
-
-Especialidades inferidas por autor (tabla derivada).
+**Esta es la única tabla de mapeo** porque la afiliación es el único campo 100% fiable para determinar la especialidad de un autor individual. Un artículo puede tener autores de múltiples especialidades, pero la afiliación indica directamente dónde trabaja cada autor.
 
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
-| `id` | SERIAL (PK) | ID auto-generado |
+| `sm_affiliation_id` | SERIAL (PK) | ID auto-generado |
+| `affiliation_pattern` | VARCHAR(500) | Patrón de afiliación |
+| `pattern_type` | VARCHAR(20) | Tipo: exact, contains, prefix, suffix |
+| `snomed_code` | VARCHAR(20) (FK) | Código SNOMED CT |
+| `fidelity` | VARCHAR(20) | snomed=nombre oficial, simplified=nombre simplificado |
+| `created_at` | TIMESTAMP | Fecha de creación |
+
+---
+
+### Tablas de Resultados (Schema: `sm_result`)
+
+#### Tabla: `sm_result.author_specialties`
+
+Especialidades inferidas por autor basándose en sus afiliaciones.
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| `sm_author_specialty_id` | SERIAL (PK) | ID auto-generado |
 | `author_name` | VARCHAR(500) | Nombre del autor |
 | `author_orcid` | VARCHAR(50) | ORCID si disponible |
 | `snomed_code` | VARCHAR(20) (FK) | Código SNOMED CT |
-| `confidence` | DECIMAL(4,3) | Confianza agregada (0.000-1.000) |
+| `confidence` | DECIMAL(4,3) | Confianza (1.0=SNOMED, 0.9=simplificado) |
 | `article_count` | INTEGER | Artículos que contribuyen |
-| `sources` | TEXT | Fuentes (journal,mesh,affiliation,...) |
 | `last_updated` | TIMESTAMP | Última actualización |
 
 ---
@@ -267,8 +303,11 @@ python scripts/download_pubmed.py --incremental # Solo artículos nuevos (para C
 # Sincronizar especialidades con API FHIR
 python scripts/sync_snomed_specialties.py --apply
 
-# Poblar sinónimos de especialidades MIR
-python scripts/populate_specialty_synonyms.py --apply
+# Poblar mapeo afiliación→SNOMED
+python scripts/populate_specialty_mappings.py --apply
+
+# Poblar especialidades de autores
+python scripts/populate_author_specialties.py
 
 # Importar términos MeSH
 python scripts/import_mesh_terms.py
@@ -312,10 +351,9 @@ PubMed API (Entrez)
     ┌────┴────┐
     │         │
     ▼         ▼
-pubmed_    snomed_
-articles   specialties
-pubmed_    nlm_mesh_terms
-authors    mappings...
+raw.*      vocab.*
+sm_attr.*  sm_maps.*
+           sm_result.*
 ```
 
 ---
@@ -335,68 +373,75 @@ El módulo `rate_limiter.py` gestiona esto automáticamente.
 ```sql
 -- Todos los autores españoles únicos
 SELECT DISTINCT author_name, author_orcid
-FROM pubmed_authors;
+FROM raw.pubmed_authors;
 
 -- Artículos por tipo de publicación
 SELECT publication_types, COUNT(*)
-FROM pubmed_articles
+FROM raw.pubmed_articles
 GROUP BY publication_types;
 
 -- Autores con ORCID
 SELECT author_name, author_orcid, COUNT(*) as articulos
-FROM pubmed_authors
+FROM raw.pubmed_authors
 WHERE author_orcid IS NOT NULL
 GROUP BY author_name, author_orcid
 ORDER BY articulos DESC;
 
 -- Especialidades MIR españolas
 SELECT snomed_code, name_en, name_es
-FROM snomed_specialties
+FROM vocab.snomed_specialties
 WHERE is_mir_spain = TRUE
 ORDER BY name_es;
 
--- Buscar especialidad por sinónimo
-SELECT snomed_code, name_en, name_es
-FROM snomed_specialties
-WHERE synonyms ILIKE '%cardiology%';
+-- Top keywords más usados
+SELECT keyword_text, article_count
+FROM sm_attr.keywords
+ORDER BY article_count DESC
+LIMIT 20;
 
--- Inferir especialidades de un artículo (usando función)
-SELECT * FROM get_specialties_for_mesh_tree('C14.280.434');
+-- Top revistas por número de artículos
+SELECT journal_name, article_count
+FROM sm_attr.journals
+ORDER BY article_count DESC
+LIMIT 20;
+
+-- Especialidades más comunes entre autores
+SELECT s.name_en, COUNT(*) as autores
+FROM sm_result.author_specialties a
+JOIN vocab.snomed_specialties s ON a.snomed_code = s.snomed_code
+GROUP BY s.name_en
+ORDER BY autores DESC;
 ```
 
 ---
 
 ## Inferencia de Especialidades
 
-El servicio `SpecialtyService` combina múltiples fuentes para inferir especialidades:
+El servicio `SpecialtyService` infiere especialidades **únicamente desde las afiliaciones de los autores**, ya que es el único campo 100% fiable para determinar la especialidad de cada autor individual.
 
 ```python
 from src.services.specialty_service import SpecialtyService
 from src.database.connection import db
 
 with db.cursor_context() as cur:
-    specialties = SpecialtyService.infer_article_specialties(
+    # Infiere especialidades de los autores de un artículo
+    specialties = SpecialtyService.infer_author_specialties(
         cur,
         pubmed_id=12345678,
-        top_n=5,
-        min_confidence=0.1
+        min_confidence=0.5
     )
 
     for spec in specialties:
-        print(f"{spec['name_en']}: {spec['score']:.2f}")
-        print(f"  Fuentes: {spec['sources']}")
+        print(f"{spec['name_en']}: {spec['confidence']:.2f}")
+        print(f"  Afiliaciones: {spec['affiliations']}")
 ```
 
-### Pesos por fuente
+### Niveles de Confianza
 
-| Fuente | Peso | Confianza típica |
-|--------|------|------------------|
-| MeSH terms | 0.40 | Alta (vocabulario controlado) |
-| Journal | 0.25 | Alta (revistas especializadas) |
-| Keywords | 0.15 | Media |
-| Title patterns | 0.10 | Media |
-| Abstract patterns | 0.05 | Baja |
-| Affiliation | 0.05 | Baja |
+| Nivel | Valor | Descripción |
+|-------|-------|-------------|
+| SNOMED | 1.0 | Nombre oficial SNOMED encontrado en afiliación |
+| Simplificado | 0.9 | Nombre simplificado (en/es) encontrado |
 
 ---
 

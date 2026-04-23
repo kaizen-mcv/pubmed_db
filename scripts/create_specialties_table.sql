@@ -2,14 +2,18 @@
 -- Tabla de Especialidades Médicas (SNOMED CT)
 -- Fuente SNOMED CT: https://www.hl7.org/fhir/valueset-c80-practice-codes.html
 -- Fuente MIR España: https://fse.mscbs.gob.es/fseweb/
+-- Schema: vocab (vocabulario médico controlado)
 -- ============================================================================
 
+-- Crear schema si no existe
+CREATE SCHEMA IF NOT EXISTS vocab;
+
 -- Eliminar tabla existente
-DROP TABLE IF EXISTS snomed_specialties CASCADE;
+DROP TABLE IF EXISTS vocab.snomed_specialties CASCADE;
 
 -- Crear tabla con estructura completa
-CREATE TABLE snomed_specialties (
-    id SERIAL PRIMARY KEY,
+CREATE TABLE vocab.snomed_specialties (
+    sm_specialty_id SERIAL PRIMARY KEY,
     snomed_code VARCHAR(20) UNIQUE NOT NULL,      -- Código SNOMED CT
     name_en VARCHAR(200) NOT NULL,                 -- Nombre simplificado inglés
     name_snomed VARCHAR(200),                      -- Nombre oficial FHIR (con "qualifier value")
@@ -25,7 +29,7 @@ CREATE TABLE snomed_specialties (
 -- Las especialidades MIR tienen name_es, synonyms e is_mir_spain=TRUE
 -- ============================================================================
 
-INSERT INTO snomed_specialties (snomed_code, name_en, name_snomed, name_es, synonyms, is_mir_spain) VALUES
+INSERT INTO vocab.snomed_specialties (snomed_code, name_en, name_snomed, name_es, synonyms, is_mir_spain) VALUES
 
 -- ============================================================================
 -- ESPECIALIDADES MIR ESPAÑA (45)
@@ -155,17 +159,18 @@ INSERT INTO snomed_specialties (snomed_code, name_en, name_snomed, name_es, syno
 -- ============================================================================
 -- Índices
 -- ============================================================================
-CREATE INDEX idx_snomed_specialties_snomed ON snomed_specialties(snomed_code);
-CREATE INDEX idx_snomed_specialties_mir ON snomed_specialties(is_mir_spain);
+CREATE INDEX idx_snomed_specialties_snomed ON vocab.snomed_specialties(snomed_code);
+CREATE INDEX idx_snomed_specialties_mir ON vocab.snomed_specialties(is_mir_spain);
 
 -- ============================================================================
 -- Comentarios
 -- ============================================================================
-COMMENT ON TABLE snomed_specialties IS 'Especialidades médicas SNOMED CT / HL7 FHIR';
-COMMENT ON COLUMN snomed_specialties.snomed_code IS 'Código SNOMED CT único';
-COMMENT ON COLUMN snomed_specialties.name_en IS 'Nombre simplificado en inglés';
-COMMENT ON COLUMN snomed_specialties.name_snomed IS 'Nombre oficial FHIR (con qualifier value)';
-COMMENT ON COLUMN snomed_specialties.name_es IS 'Traducción al español';
-COMMENT ON COLUMN snomed_specialties.synonyms IS 'Sinónimos para matching, separados por punto y coma';
-COMMENT ON COLUMN snomed_specialties.is_mir_spain IS 'TRUE si es especialidad MIR española';
-COMMENT ON COLUMN snomed_specialties.last_checked IS 'Última sincronización con API FHIR';
+COMMENT ON SCHEMA vocab IS 'Vocabulario médico controlado (SNOMED, MeSH)';
+COMMENT ON TABLE vocab.snomed_specialties IS 'Especialidades médicas SNOMED CT / HL7 FHIR';
+COMMENT ON COLUMN vocab.snomed_specialties.snomed_code IS 'Código SNOMED CT único';
+COMMENT ON COLUMN vocab.snomed_specialties.name_en IS 'Nombre simplificado en inglés';
+COMMENT ON COLUMN vocab.snomed_specialties.name_snomed IS 'Nombre oficial FHIR (con qualifier value)';
+COMMENT ON COLUMN vocab.snomed_specialties.name_es IS 'Traducción al español';
+COMMENT ON COLUMN vocab.snomed_specialties.synonyms IS 'Sinónimos para matching, separados por punto y coma';
+COMMENT ON COLUMN vocab.snomed_specialties.is_mir_spain IS 'TRUE si es especialidad MIR española';
+COMMENT ON COLUMN vocab.snomed_specialties.last_checked IS 'Última sincronización con API FHIR';

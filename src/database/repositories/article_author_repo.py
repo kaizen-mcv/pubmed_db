@@ -34,7 +34,7 @@ class ArticleAuthorRepository:
             ID del registro insertado
         """
         cur.execute("""
-            INSERT INTO pubmed_authors (
+            INSERT INTO raw.pubmed_authors (
                 pubmed_id,
                 author_name,
                 author_position,
@@ -43,7 +43,7 @@ class ArticleAuthorRepository:
                 affiliation
             )
             VALUES (%s, %s, %s, %s, %s, %s)
-            RETURNING id
+            RETURNING sm_author_id
         """, (
             pubmed_id,
             author.get_full_name(),
@@ -87,7 +87,7 @@ class ArticleAuthorRepository:
             Número de registros eliminados
         """
         cur.execute(
-            "DELETE FROM pubmed_authors WHERE pubmed_id = %s",
+            "DELETE FROM raw.pubmed_authors WHERE pubmed_id = %s",
             (pubmed_id,)
         )
         return cur.rowcount
@@ -103,5 +103,5 @@ class ArticleAuthorRepository:
         Returns:
             Número total de registros
         """
-        cur.execute("SELECT COUNT(*) FROM pubmed_authors")
+        cur.execute("SELECT COUNT(*) FROM raw.pubmed_authors")
         return cur.fetchone()[0]

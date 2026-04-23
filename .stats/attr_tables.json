@@ -1,0 +1,262 @@
+{
+  "journals": {
+    "total": 8472,
+    "top_10": [
+      {
+        "journal": "Scientific reports",
+        "articles": 9807
+      },
+      {
+        "journal": "PloS one",
+        "articles": 7400
+      },
+      {
+        "journal": "International journal of environmental research and public health",
+        "articles": 6204
+      },
+      {
+        "journal": "International journal of molecular sciences",
+        "articles": 5815
+      },
+      {
+        "journal": "Sensors (Basel, Switzerland)",
+        "articles": 5034
+      },
+      {
+        "journal": "The Science of the total environment",
+        "articles": 4868
+      },
+      {
+        "journal": "Journal of clinical medicine",
+        "articles": 4191
+      },
+      {
+        "journal": "Nature communications",
+        "articles": 3664
+      },
+      {
+        "journal": "Nutrients",
+        "articles": 3477
+      },
+      {
+        "journal": "Frontiers in psychology",
+        "articles": 3284
+      }
+    ]
+  },
+  "keywords": {
+    "total": 567935,
+    "top_20": [
+      {
+        "keyword": "COVID-19",
+        "articles": 7494
+      },
+      {
+        "keyword": "SARS-CoV-2",
+        "articles": 2919
+      },
+      {
+        "keyword": "inflammation",
+        "articles": 2582
+      },
+      {
+        "keyword": "Spain",
+        "articles": 2428
+      },
+      {
+        "keyword": "obesity",
+        "articles": 2120
+      },
+      {
+        "keyword": "cancer",
+        "articles": 1904
+      },
+      {
+        "keyword": "biomarkers",
+        "articles": 1788
+      },
+      {
+        "keyword": "quality of life",
+        "articles": 1691
+      },
+      {
+        "keyword": "Mortality",
+        "articles": 1684
+      },
+      {
+        "keyword": "Alzheimer’s disease",
+        "articles": 1659
+      },
+      {
+        "keyword": "oxidative stress",
+        "articles": 1635
+      },
+      {
+        "keyword": "epidemiology",
+        "articles": 1591
+      },
+      {
+        "keyword": "children",
+        "articles": 1518
+      },
+      {
+        "keyword": "Obesity",
+        "articles": 1491
+      },
+      {
+        "keyword": "Inflammation",
+        "articles": 1451
+      },
+      {
+        "keyword": "physical activity",
+        "articles": 1430
+      },
+      {
+        "keyword": "depression",
+        "articles": 1414
+      },
+      {
+        "keyword": "Biomarkers",
+        "articles": 1374
+      },
+      {
+        "keyword": "machine learning",
+        "articles": 1373
+      },
+      {
+        "keyword": "mortality",
+        "articles": 1362
+      }
+    ]
+  },
+  "affiliations": {
+    "total": 931660,
+    "top_10": [
+      {
+        "affiliation": "Centro de Investigaciones Energéticas Medioambientales y Tecnológicas (CIEMAT), Madrid, Spain.",
+        "authors": 5998
+      },
+      {
+        "affiliation": "Instituto de Física de Cantabria (IFCA), CSIC-Universidad de Cantabria, Santander, Spain.",
+        "authors": 4255
+      },
+      {
+        "affiliation": "Spain.",
+        "authors": 2272
+      },
+      {
+        "affiliation": "Instituto de Física Corpuscular (IFIC) and Departamento de Física Atómica, Molecular y Nuclear and Departamento de Ingeniería Electrónica and Institut",
+        "authors": 2197
+      },
+      {
+        "affiliation": "Institut de Física d'Altes Energies (IFAE), The Barcelona Institute of Science and Technology, Barcelona, Spain.",
+        "authors": 2196
+      },
+      {
+        "affiliation": "Institut de Física d'Altes Energies (IFAE), Barcelona Institute of Science and Technology, Barcelona, Spain.",
+        "authors": 1725
+      },
+      {
+        "affiliation": "Institut de Física d'Altes Energies and Departament de Física de la Universitat Autònoma de Barcelona, Barcelona, Spain.",
+        "authors": 1514
+      },
+      {
+        "affiliation": "Instituto de Física Corpuscular (IFIC), Centro Mixto Universidad de Valencia-CSIC, Valencia, Spain.",
+        "authors": 1481
+      },
+      {
+        "affiliation": "ICCUB, Universitat de Barcelona, Barcelona, Spain.",
+        "authors": 1457
+      },
+      {
+        "affiliation": "Instituto de Física Corpuscular (IFIC), Centro Mixto Universidad de Valencia - CSIC, Valencia, Spain.",
+        "authors": 1215
+      }
+    ]
+  },
+  "mesh_terms_articles": {
+    "total": 24917,
+    "top_20": [
+      {
+        "mesh_term": "Humans",
+        "articles": 243473
+      },
+      {
+        "mesh_term": "Female",
+        "articles": 113322
+      },
+      {
+        "mesh_term": "Male",
+        "articles": 105004
+      },
+      {
+        "mesh_term": "Animals",
+        "articles": 64667
+      },
+      {
+        "mesh_term": "Adult",
+        "articles": 59846
+      },
+      {
+        "mesh_term": "Middle Aged",
+        "articles": 58831
+      },
+      {
+        "mesh_term": "Aged",
+        "articles": 48224
+      },
+      {
+        "mesh_term": "Spain",
+        "articles": 27640
+      },
+      {
+        "mesh_term": "Young Adult",
+        "articles": 22615
+      },
+      {
+        "mesh_term": "Adolescent",
+        "articles": 21943
+      },
+      {
+        "mesh_term": "Retrospective Studies",
+        "articles": 20856
+      },
+      {
+        "mesh_term": "Treatment Outcome",
+        "articles": 20331
+      },
+      {
+        "mesh_term": "Child",
+        "articles": 20143
+      },
+      {
+        "mesh_term": "80 and over",
+        "articles": 17443
+      },
+      {
+        "mesh_term": "Mice",
+        "articles": 17313
+      },
+      {
+        "mesh_term": "Prospective Studies",
+        "articles": 16746
+      },
+      {
+        "mesh_term": "Risk Factors",
+        "articles": 15210
+      },
+      {
+        "mesh_term": "Cross-Sectional Studies",
+        "articles": 14570
+      },
+      {
+        "mesh_term": "Biomarkers",
+        "articles": 13540
+      },
+      {
+        "mesh_term": "COVID-19",
+        "articles": 11616
+      }
+    ]
+  }
+}
