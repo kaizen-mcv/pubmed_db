@@ -1,0 +1,66 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pubmed-spain-downloader"
+version = "0.1.0"
+description = "Batch downloader for PubMed articles authored by researchers with Spanish affiliations, with PostgreSQL persistence and SNOMED-CT specialty inference."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+authors = [{ name = "kaizen-mcv" }]
+keywords = ["pubmed", "ncbi", "bioinformatics", "postgresql", "snomed-ct", "mesh"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+dependencies = [
+    "biopython>=1.86",
+    "psycopg2-binary>=2.9.0",
+    "pyyaml>=6.0",
+    "tzdata>=2024.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4",
+    "ruff>=0.5",
+]
+
+[project.urls]
+Repository = "https://github.com/kaizen-mcv/pubmed_db"
+Issues = "https://github.com/kaizen-mcv/pubmed_db/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
+[tool.pytest.ini_options]
+cache_dir = "data/.pytest_cache"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+exclude = ["venv", "data", ".stats", ".claude"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "C4", "SIM", "RUF"]
+ignore = [
+    "E501",  # line-too-long: respetado por formatter en lo que puede
+    "B008",  # argparse/typer patterns usan default calls
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
