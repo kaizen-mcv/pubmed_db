@@ -22,4 +22,9 @@ data/*.json
 
 # Secretos y config local
 .env
-.claude/settings.local.json
+
+# Documentación y config interna del asistente (no va al repo público)
+.claude/
+
+# Snapshots JSON de ejecuciones locales
+.stats/

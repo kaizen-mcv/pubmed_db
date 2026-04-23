@@ -33,8 +33,9 @@ batch:
 
 # === CONFIGURACIÓN DE DESCARGA ===
 download:
-  # Email requerido por NCBI (cambiar por el tuyo)
-  email: "marcx2002@gmail.com"
+  # Email requerido por NCBI E-utilities: usa uno real, es obligatorio y
+  # NCBI puede contactarte si tus requests generan problemas.
+  email: "your-email@example.com"
 
   # API Key (opcional, aumenta rate limit a 10/s)
   # Obtener en: https://www.ncbi.nlm.nih.gov/account/settings/
