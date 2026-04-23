@@ -1,8 +1,8 @@
 """
-Extractor de campos del artículo.
+Article field extractor.
 
-Extrae: pubmed_id, article_title, article_abstract, journal_name, journal_issn,
-        article_doi, publication_date, publication_types, mesh_terms, author_keywords
+Extracts: pubmed_id, article_title, article_abstract, journal_name, journal_issn,
+          article_doi, publication_date, publication_types, mesh_terms, author_keywords
 """
 
 from datetime import date
@@ -11,10 +11,10 @@ from typing import Any, Dict, Optional
 
 class ArticleExtractor:
     """
-    Extrae campos principales de un artículo de PubMed XML.
+    Extracts the main fields of a PubMed XML article.
     """
 
-    # Mapeo de meses texto a número
+    # Month name to number mapping
     MONTH_MAP = {
         'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04',
         'May': '05', 'Jun': '06', 'Jul': '07', 'Aug': '08',
@@ -28,26 +28,26 @@ class ArticleExtractor:
     @staticmethod
     def extract_pubmed_id(article_data: Dict[str, Any]) -> int:
         """
-        Extrae el PubMed ID del artículo.
+        Extract the PubMed ID of the article.
 
         Args:
-            article_data: Diccionario con datos del artículo de Entrez
+            article_data: Dictionary with Entrez article data
 
         Returns:
-            PubMed ID como entero
+            PubMed ID as integer
         """
         return int(article_data['MedlineCitation']['PMID'])
 
     @staticmethod
     def extract_pubmed_central_id(article_data: Dict[str, Any]) -> Optional[str]:
         """
-        Extrae el PubMed Central ID (PMC) si existe.
+        Extract the PubMed Central ID (PMC) if it exists.
 
         Args:
-            article_data: Diccionario con datos del artículo
+            article_data: Dictionary with article data
 
         Returns:
-            PMC ID (ej: "PMC1234567") o None
+            PMC ID (e.g. "PMC1234567") or None
         """
         article_ids = article_data.get('PubmedData', {}).get('ArticleIdList', [])
 
@@ -61,13 +61,13 @@ class ArticleExtractor:
     @staticmethod
     def extract_article_title(article_data: Dict[str, Any]) -> str:
         """
-        Extrae el título del artículo.
+        Extract the title of the article.
 
         Args:
-            article_data: Diccionario con datos del artículo
+            article_data: Dictionary with article data
 
         Returns:
-            Título del artículo
+            Article title
         """
         article = article_data['MedlineCitation']['Article']
         return article.get('ArticleTitle', '')
@@ -75,15 +75,15 @@ class ArticleExtractor:
     @staticmethod
     def extract_article_abstract(article_data: Dict[str, Any]) -> Optional[str]:
         """
-        Extrae el abstract del artículo.
+        Extract the abstract of the article.
 
-        Maneja abstracts estructurados (con secciones) y simples.
+        Handles both structured (with sections) and plain abstracts.
 
         Args:
-            article_data: Diccionario con datos del artículo
+            article_data: Dictionary with article data
 
         Returns:
-            Abstract como texto o None
+            Abstract as text or None
         """
         article = article_data['MedlineCitation']['Article']
         abstract_data = article.get('Abstract', {})
@@ -96,7 +96,7 @@ class ArticleExtractor:
         if not abstract_texts:
             return None
 
-        # Si es lista (abstract estructurado), concatenar
+        # If it is a list (structured abstract), concatenate
         if isinstance(abstract_texts, list):
             parts = []
             for part in abstract_texts:
@@ -112,13 +112,13 @@ class ArticleExtractor:
     @staticmethod
     def extract_article_doi(article_data: Dict[str, Any]) -> Optional[str]:
         """
-        Extrae el DOI del artículo.
+        Extract the DOI of the article.
 
         Args:
-            article_data: Diccionario con datos del artículo
+            article_data: Dictionary with article data
 
         Returns:
-            DOI (ej: "10.1000/xyz123") o None
+            DOI (e.g. "10.1000/xyz123") or None
         """
         article_ids = article_data.get('PubmedData', {}).get('ArticleIdList', [])
 
@@ -132,13 +132,13 @@ class ArticleExtractor:
     @classmethod
     def extract_publication_date(cls, article_data: Dict[str, Any]) -> Optional[date]:
         """
-        Extrae la fecha de publicación.
+        Extract the publication date.
 
         Args:
-            article_data: Diccionario con datos del artículo
+            article_data: Dictionary with article data
 
         Returns:
-            Fecha como objeto date o None
+            Date as date object or None
         """
         article = article_data['MedlineCitation']['Article']
         journal = article.get('Journal', {})
@@ -151,17 +151,17 @@ class ArticleExtractor:
         if not year:
             return None
 
-        # Convertir mes de texto a número
+        # Convert month from text to number
         if month in cls.MONTH_MAP:
             month = cls.MONTH_MAP[month]
 
         try:
-            # Asegurar formato correcto
+            # Ensure correct format
             month = str(month).zfill(2)
             day = str(day).zfill(2)
             return date(int(year), int(month), int(day))
         except (ValueError, TypeError):
-            # Si falla, intentar solo con año
+            # If it fails, try with year only
             try:
                 return date(int(year), 1, 1)
             except (ValueError, TypeError):
@@ -170,13 +170,13 @@ class ArticleExtractor:
     @staticmethod
     def extract_journal_name(article_data: Dict[str, Any]) -> Optional[str]:
         """
-        Extrae el nombre de la revista.
+        Extract the journal name.
 
         Args:
-            article_data: Diccionario con datos del artículo
+            article_data: Dictionary with article data
 
         Returns:
-            Nombre de la revista o None
+            Journal name or None
         """
         article = article_data['MedlineCitation']['Article']
         journal = article.get('Journal', {})
@@ -185,13 +185,13 @@ class ArticleExtractor:
     @staticmethod
     def extract_journal_issn(article_data: Dict[str, Any]) -> Optional[str]:
         """
-        Extrae el ISSN de la revista.
+        Extract the ISSN of the journal.
 
         Args:
-            article_data: Diccionario con datos del artículo
+            article_data: Dictionary with article data
 
         Returns:
-            ISSN (ej: "1234-5678") o None
+            ISSN (e.g. "1234-5678") or None
         """
         article = article_data['MedlineCitation']['Article']
         journal = article.get('Journal', {})
@@ -205,13 +205,13 @@ class ArticleExtractor:
     @staticmethod
     def extract_publication_types(article_data: Dict[str, Any]) -> Optional[str]:
         """
-        Extrae los tipos de publicación del artículo.
+        Extract the publication types of the article.
 
         Args:
-            article_data: Diccionario con datos del artículo
+            article_data: Dictionary with article data
 
         Returns:
-            Tipos de publicación separados por ; (ej: "Journal Article; Review") o None
+            Publication types separated by ; (e.g. "Journal Article; Review") or None
         """
         article = article_data['MedlineCitation']['Article']
         pub_types = article.get('PublicationTypeList', [])
@@ -232,13 +232,13 @@ class ArticleExtractor:
     @staticmethod
     def extract_mesh_terms(article_data: Dict[str, Any]) -> Optional[str]:
         """
-        Extrae los términos MeSH del artículo.
+        Extract the MeSH terms of the article.
 
         Args:
-            article_data: Diccionario con datos del artículo
+            article_data: Dictionary with article data
 
         Returns:
-            Términos MeSH separados por coma o None
+            MeSH terms separated by commas or None
         """
         mesh_list = article_data['MedlineCitation'].get('MeshHeadingList', [])
 
@@ -256,13 +256,13 @@ class ArticleExtractor:
     @staticmethod
     def extract_author_keywords(article_data: Dict[str, Any]) -> Optional[str]:
         """
-        Extrae las keywords del autor.
+        Extract the author keywords.
 
         Args:
-            article_data: Diccionario con datos del artículo
+            article_data: Dictionary with article data
 
         Returns:
-            Keywords separados por coma o None
+            Keywords separated by commas or None
         """
         keyword_list = article_data['MedlineCitation'].get('KeywordList', [])
 

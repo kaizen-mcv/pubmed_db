@@ -1,7 +1,7 @@
 """
-Repositorio de autores de artículos.
+Article authors repository.
 
-CRUD para la tabla pubmed_authors.
+CRUD for the pubmed_authors table.
 """
 
 from typing import List
@@ -17,21 +17,21 @@ from src.models.author import Author
 
 class ArticleAuthorRepository:
     """
-    Repositorio para operaciones CRUD de autores de artículos.
+    Repository for CRUD operations on article authors.
     """
 
     @staticmethod
     def insert(cur: cursor, pubmed_id: int, author: Author) -> int:
         """
-        Inserta un autor de artículo.
+        Insert an article author.
 
         Args:
-            cur: Cursor de base de datos
-            pubmed_id: ID del artículo en PubMed
-            author: Objeto Author a guardar
+            cur: Database cursor
+            pubmed_id: Article ID in PubMed
+            author: Author object to store
 
         Returns:
-            ID del registro insertado
+            ID of the inserted record
         """
         cur.execute("""
             INSERT INTO raw.pubmed_authors (
@@ -58,15 +58,15 @@ class ArticleAuthorRepository:
     @staticmethod
     def insert_batch(cur: cursor, pubmed_id: int, authors: List[Author]) -> int:
         """
-        Inserta múltiples autores de un artículo.
+        Insert multiple authors for an article.
 
         Args:
-            cur: Cursor de base de datos
-            pubmed_id: ID del artículo en PubMed
-            authors: Lista de objetos Author a guardar
+            cur: Database cursor
+            pubmed_id: Article ID in PubMed
+            authors: List of Author objects to store
 
         Returns:
-            Número de autores insertados
+            Number of authors inserted
         """
         count = 0
         for author in authors:
@@ -77,14 +77,14 @@ class ArticleAuthorRepository:
     @staticmethod
     def delete_by_pubmed_id(cur: cursor, pubmed_id: int) -> int:
         """
-        Elimina todos los autores de un artículo.
+        Delete all authors for an article.
 
         Args:
-            cur: Cursor de base de datos
-            pubmed_id: ID del artículo en PubMed
+            cur: Database cursor
+            pubmed_id: Article ID in PubMed
 
         Returns:
-            Número de registros eliminados
+            Number of records deleted
         """
         cur.execute(
             "DELETE FROM raw.pubmed_authors WHERE pubmed_id = %s",
@@ -95,13 +95,13 @@ class ArticleAuthorRepository:
     @staticmethod
     def count(cur: cursor) -> int:
         """
-        Cuenta el total de registros de autores.
+        Count the total number of author records.
 
         Args:
-            cur: Cursor de base de datos
+            cur: Database cursor
 
         Returns:
-            Número total de registros
+            Total number of records
         """
         cur.execute("SELECT COUNT(*) FROM raw.pubmed_authors")
         return cur.fetchone()[0]

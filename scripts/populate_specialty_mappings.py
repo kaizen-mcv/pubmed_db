@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-"""
-Script para poblar la tabla de mapeo de afiliaciones a especialidades SNOMED.
-Analiza las afiliaciones de autores y asigna códigos SNOMED basándose en
-coincidencias de texto con nombres de especialidades.
+"""Populates the affiliation-to-SNOMED specialty mapping table.
 
-Fidelidad:
-- 'snomed' = el nombre oficial SNOMED aparece en el texto
-- 'simplified' = el nombre simplificado (en/es) aparece en el texto
+Analyzes author affiliations and assigns SNOMED codes based on text matches
+with specialty names.
 
-Uso:
+Fidelity:
+    - 'snomed': the official SNOMED name appears in the text.
+    - 'simplified': the simplified name (en/es) appears in the text.
+
+Usage:
     python scripts/populate_specialty_mappings.py           # Dry-run
-    python scripts/populate_specialty_mappings.py --apply   # Ejecutar
+    python scripts/populate_specialty_mappings.py --apply   # Execute
 """
 
 import sys
@@ -26,11 +26,10 @@ logger = get_logger(__name__)
 
 
 def get_specialties():
-    """
-    Obtiene todas las especialidades SNOMED con sus nombres.
+    """Fetches all SNOMED specialties with their names.
 
     Returns:
-        list: Lista de diccionarios con snomed_code, name_snomed, name_en, name_es
+        list: List of dicts with snomed_code, name_snomed, name_en, name_es.
     """
     with db.cursor_context() as cur:
         cur.execute("""
@@ -51,20 +50,19 @@ def get_specialties():
 
 
 def check_matches(text, specialties):
-    """
-    Busca todas las especialidades que coinciden con el texto.
+    """Finds all specialties that match the text.
 
-    Orden de prioridad:
-    1. name_snomed → 'snomed'
-    2. name_en → 'simplified'
-    3. name_es → 'simplified'
+    Priority order:
+        1. name_snomed -> 'snomed'
+        2. name_en -> 'simplified'
+        3. name_es -> 'simplified'
 
     Args:
-        text: Texto donde buscar coincidencias
-        specialties: Lista de especialidades de get_specialties()
+        text: Text in which to search for matches.
+        specialties: List of specialties from get_specialties().
 
     Returns:
-        list: Lista de tuplas (snomed_code, fidelity)
+        list: List of (snomed_code, fidelity) tuples.
     """
     if not text:
         return []
@@ -76,23 +74,23 @@ def check_matches(text, specialties):
     for spec in specialties:
         code = spec['snomed_code']
 
-        # Ya encontrado por fuente de mayor prioridad
+        # Already found via a higher priority source
         if code in matched_codes:
             continue
 
-        # 1. Nombre SNOMED (sin "qualifier value")
+        # 1. SNOMED name (without "qualifier value")
         if spec['name_snomed'] and spec['name_snomed'] in text_lower:
             matches.append((code, 'snomed'))
             matched_codes.add(code)
             continue
 
-        # 2. Nombre inglés
+        # 2. English name
         if spec['name_en'] and spec['name_en'] in text_lower:
             matches.append((code, 'simplified'))
             matched_codes.add(code)
             continue
 
-        # 3. Nombre español
+        # 3. Spanish name
         if spec['name_es'] and spec['name_es'] in text_lower:
             matches.append((code, 'simplified'))
             matched_codes.add(code)
@@ -102,11 +100,11 @@ def check_matches(text, specialties):
 
 
 def populate_affiliation_mappings(specialties, apply=False):
-    """Pobla la tabla affiliation_to_snomed."""
+    """Populates the affiliation_to_snomed table."""
     logger.info("Analizando afiliaciones...")
 
     with db.cursor_context() as cur:
-        # Obtener afiliaciones únicas
+        # Fetch unique affiliations
         cur.execute("""
             SELECT DISTINCT affiliation
             FROM raw.pubmed_authors
@@ -115,14 +113,14 @@ def populate_affiliation_mappings(specialties, apply=False):
         affiliations = [row[0] for row in cur.fetchall()]
         logger.info(f"   Afiliaciones únicas encontradas: {len(affiliations)}")
 
-        # Contar matches
+        # Count matches
         stats = {'snomed': 0, 'simplified': 0, 'total': 0}
         mappings = []
 
         for affiliation in affiliations:
             matches = check_matches(affiliation, specialties)
             for snomed_code, fidelity in matches:
-                pattern = affiliation[:500]  # Limitar longitud
+                pattern = affiliation[:500]  # Limit length
                 mappings.append((pattern, snomed_code, fidelity))
                 stats['total'] += 1
                 if fidelity == 'snomed':
@@ -154,7 +152,7 @@ def populate_affiliation_mappings(specialties, apply=False):
 
 
 def show_stats():
-    """Muestra estadísticas de la tabla de mapeo."""
+    """Displays statistics for the mapping table."""
     logger.info("")
     logger.info("=" * 60)
     logger.info("ESTADÍSTICAS DE MAPEOS")
@@ -181,8 +179,8 @@ def show_stats():
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Pobla la tabla de mapeo afiliación → SNOMED')
-    parser.add_argument('--apply', action='store_true', help='Ejecutar cambios (sin esto es dry-run)')
+    parser = argparse.ArgumentParser(description='Populates the affiliation-to-SNOMED mapping table')
+    parser.add_argument('--apply', action='store_true', help='Execute changes (without this it is a dry-run)')
     args = parser.parse_args()
 
     logger.info("=" * 60)
@@ -201,15 +199,15 @@ def main():
     logger.info("")
 
     try:
-        # Obtener especialidades
+        # Fetch specialties
         specialties = get_specialties()
         logger.info(f"Especialidades cargadas: {len(specialties)}")
         logger.info("")
 
-        # Poblar tabla de afiliaciones
+        # Populate affiliations table
         populate_affiliation_mappings(specialties, apply=args.apply)
 
-        # Mostrar estadísticas si se aplicaron cambios
+        # Show stats if changes were applied
         if args.apply:
             show_stats()
 

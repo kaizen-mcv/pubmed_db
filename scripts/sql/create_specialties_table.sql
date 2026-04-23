@@ -1,38 +1,38 @@
 -- ============================================================================
--- Tabla de Especialidades Médicas (SNOMED CT)
--- Fuente SNOMED CT: https://www.hl7.org/fhir/valueset-c80-practice-codes.html
--- Fuente MIR España: https://fse.mscbs.gob.es/fseweb/
--- Schema: vocab (vocabulario médico controlado)
+-- Medical Specialties Table (SNOMED CT)
+-- SNOMED CT source: https://www.hl7.org/fhir/valueset-c80-practice-codes.html
+-- Spain MIR source: https://fse.mscbs.gob.es/fseweb/
+-- Schema: vocab (controlled medical vocabulary)
 -- ============================================================================
 
--- Crear schema si no existe
+-- Create schema if it does not exist
 CREATE SCHEMA IF NOT EXISTS vocab;
 
--- Eliminar tabla existente
+-- Drop existing table
 DROP TABLE IF EXISTS vocab.snomed_specialties CASCADE;
 
--- Crear tabla con estructura completa
+-- Create table with full structure
 CREATE TABLE vocab.snomed_specialties (
     sm_specialty_id SERIAL PRIMARY KEY,
-    snomed_code VARCHAR(20) UNIQUE NOT NULL,      -- Código SNOMED CT
-    name_en VARCHAR(200) NOT NULL,                 -- Nombre simplificado inglés
-    name_snomed VARCHAR(200),                      -- Nombre oficial FHIR (con "qualifier value")
-    name_es VARCHAR(200),                          -- Traducción al español
-    synonyms TEXT,                                 -- Sinónimos para matching (separados por ;)
-    is_mir_spain BOOLEAN DEFAULT FALSE,            -- TRUE si es especialidad MIR española
+    snomed_code VARCHAR(20) UNIQUE NOT NULL,      -- SNOMED CT code
+    name_en VARCHAR(200) NOT NULL,                 -- Simplified English name
+    name_snomed VARCHAR(200),                      -- Official FHIR name (with "qualifier value")
+    name_es VARCHAR(200),                          -- Spanish translation
+    synonyms TEXT,                                 -- Synonyms for matching (separated by ;)
+    is_mir_spain BOOLEAN DEFAULT FALSE,            -- TRUE if it is a Spanish MIR specialty
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    last_checked DATE                              -- Última sincronización con API FHIR
+    last_checked DATE                              -- Last sync with FHIR API
 );
 
 -- ============================================================================
--- Insertar especialidades SNOMED CT (117 totales, 45 MIR españolas)
--- Las especialidades MIR tienen name_es, synonyms e is_mir_spain=TRUE
+-- Insert SNOMED CT specialties (117 total, 45 Spanish MIR)
+-- MIR specialties have name_es, synonyms and is_mir_spain=TRUE
 -- ============================================================================
 
 INSERT INTO vocab.snomed_specialties (snomed_code, name_en, name_snomed, name_es, synonyms, is_mir_spain) VALUES
 
 -- ============================================================================
--- ESPECIALIDADES MIR ESPAÑA (45)
+-- SPAIN MIR SPECIALTIES (45)
 -- ============================================================================
 ('408439002', 'Allergy', NULL, 'Alergología', 'allergy;allergology;alergologia;allergist;alergologo;allergic;alergico', TRUE),
 ('394577000', 'Anesthetics', 'Anaesthetics', 'Anestesiología y Reanimación', 'anesthesia;anaesthesia;anestesia;anesthesiology;anaesthesiology;anestesiologia;reanimacion;anesthetist;anaesthetist;anestesiologo', TRUE),
@@ -81,7 +81,7 @@ INSERT INTO vocab.snomed_specialties (snomed_code, name_en, name_snomed, name_es
 ('394612005', 'Urology', 'Urology (qualifier value)', 'Urología', 'urology;urologia;urologist;urologo;urinary;urinario;bladder;vejiga;prostate;prostata', TRUE),
 
 -- ============================================================================
--- ESPECIALIDADES SNOMED CT ADICIONALES (NO MIR España) (72)
+-- ADDITIONAL SNOMED CT SPECIALTIES (non-Spain MIR) (72)
 -- ============================================================================
 ('408467006', 'Adult mental illness', 'Adult mental illness - specialty (qualifier value)', NULL, NULL, FALSE),
 ('394578005', 'Audiological medicine', 'Audiological medicine (qualifier value)', NULL, NULL, FALSE),
@@ -157,20 +157,20 @@ INSERT INTO vocab.snomed_specialties (snomed_code, name_en, name_snomed, name_es
 ('419043006', 'Urological oncology', 'Urological oncology (qualifier value)', NULL, NULL, FALSE);
 
 -- ============================================================================
--- Índices
+-- Indexes
 -- ============================================================================
 CREATE INDEX idx_snomed_specialties_snomed ON vocab.snomed_specialties(snomed_code);
 CREATE INDEX idx_snomed_specialties_mir ON vocab.snomed_specialties(is_mir_spain);
 
 -- ============================================================================
--- Comentarios
+-- Comments
 -- ============================================================================
-COMMENT ON SCHEMA vocab IS 'Vocabulario médico controlado (SNOMED, MeSH)';
-COMMENT ON TABLE vocab.snomed_specialties IS 'Especialidades médicas SNOMED CT / HL7 FHIR';
-COMMENT ON COLUMN vocab.snomed_specialties.snomed_code IS 'Código SNOMED CT único';
-COMMENT ON COLUMN vocab.snomed_specialties.name_en IS 'Nombre simplificado en inglés';
-COMMENT ON COLUMN vocab.snomed_specialties.name_snomed IS 'Nombre oficial FHIR (con qualifier value)';
-COMMENT ON COLUMN vocab.snomed_specialties.name_es IS 'Traducción al español';
-COMMENT ON COLUMN vocab.snomed_specialties.synonyms IS 'Sinónimos para matching, separados por punto y coma';
-COMMENT ON COLUMN vocab.snomed_specialties.is_mir_spain IS 'TRUE si es especialidad MIR española';
-COMMENT ON COLUMN vocab.snomed_specialties.last_checked IS 'Última sincronización con API FHIR';
+COMMENT ON SCHEMA vocab IS 'Controlled medical vocabulary (SNOMED, MeSH)';
+COMMENT ON TABLE vocab.snomed_specialties IS 'SNOMED CT / HL7 FHIR medical specialties';
+COMMENT ON COLUMN vocab.snomed_specialties.snomed_code IS 'Unique SNOMED CT code';
+COMMENT ON COLUMN vocab.snomed_specialties.name_en IS 'Simplified English name';
+COMMENT ON COLUMN vocab.snomed_specialties.name_snomed IS 'Official FHIR name (with qualifier value)';
+COMMENT ON COLUMN vocab.snomed_specialties.name_es IS 'Spanish translation';
+COMMENT ON COLUMN vocab.snomed_specialties.synonyms IS 'Synonyms for matching, semicolon-separated';
+COMMENT ON COLUMN vocab.snomed_specialties.is_mir_spain IS 'TRUE if it is a Spanish MIR specialty';
+COMMENT ON COLUMN vocab.snomed_specialties.last_checked IS 'Last sync with FHIR API';

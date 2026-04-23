@@ -1,27 +1,27 @@
--- Tabla de mapeo MeSH Tree Number → SNOMED CT Specialty
--- Permite clasificar artículos por especialidad médica basándose en sus términos MeSH
--- Fuente: Mapeo manual basado en categorías MeSH (https://meshb.nlm.nih.gov/treeView)
--- Schema: vocab (vocabulario médico controlado)
+-- MeSH Tree Number -> SNOMED CT Specialty mapping table
+-- Allows classifying articles by medical specialty based on their MeSH terms
+-- Source: Manual mapping based on MeSH categories (https://meshb.nlm.nih.gov/treeView)
+-- Schema: vocab (controlled medical vocabulary)
 
--- Crear schema si no existe
+-- Create schema if it does not exist
 CREATE SCHEMA IF NOT EXISTS vocab;
 
--- Eliminar tabla existente
+-- Drop existing table
 DROP TABLE IF EXISTS vocab.mesh_to_snomed CASCADE;
 
--- Crear tabla de mapeo
+-- Create mapping table
 CREATE TABLE vocab.mesh_to_snomed (
     sm_mesh_mapping_id SERIAL PRIMARY KEY,
-    mesh_tree_prefix VARCHAR(20) NOT NULL,           -- Prefijo del tree number (ej: "C14", "C14.280")
+    mesh_tree_prefix VARCHAR(20) NOT NULL,           -- Tree number prefix (e.g. "C14", "C14.280")
     snomed_code VARCHAR(20) NOT NULL REFERENCES vocab.snomed_specialties(snomed_code),
-    description VARCHAR(200),                         -- Descripción de la categoría MeSH
-    confidence DECIMAL(3,2) DEFAULT 0.90,            -- Confianza del mapeo (0.00-1.00)
+    description VARCHAR(200),                         -- MeSH category description
+    confidence DECIMAL(3,2) DEFAULT 0.90,            -- Mapping confidence (0.00-1.00)
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(mesh_tree_prefix, snomed_code)
 );
 
 -- =====================================================
--- MAPEOS POR CATEGORÍA MeSH (C = Diseases)
+-- MAPPINGS BY MeSH CATEGORY (C = Diseases)
 -- =====================================================
 
 INSERT INTO vocab.mesh_to_snomed (mesh_tree_prefix, snomed_code, description, confidence) VALUES
@@ -117,7 +117,7 @@ INSERT INTO vocab.mesh_to_snomed (mesh_tree_prefix, snomed_code, description, co
 ('C26', '394609007', 'Wounds and Injuries (general surgery)', 0.75),
 
 -- =====================================================
--- MAPEOS POR CATEGORÍA MeSH (F = Psychiatry and Psychology)
+-- MAPPINGS BY MeSH CATEGORY (F = Psychiatry and Psychology)
 -- =====================================================
 
 -- F03: Mental Disorders → Psychiatry
@@ -125,7 +125,7 @@ INSERT INTO vocab.mesh_to_snomed (mesh_tree_prefix, snomed_code, description, co
 ('F03.625', '394588006', 'Child and Adolescent Mental Disorders', 0.90),
 
 -- =====================================================
--- MAPEOS POR CATEGORÍA MeSH (E = Analytical, Diagnostic and Therapeutic Techniques)
+-- MAPPINGS BY MeSH CATEGORY (E = Analytical, Diagnostic and Therapeutic Techniques)
 -- =====================================================
 
 -- E01.370.350: Diagnostic Imaging → Radiology
@@ -175,7 +175,7 @@ INSERT INTO vocab.mesh_to_snomed (mesh_tree_prefix, snomed_code, description, co
 ('E04.928', '408463005', 'Vascular Surgical Procedures', 0.95),
 
 -- =====================================================
--- MAPEOS POR CATEGORÍA MeSH (G = Phenomena and Processes)
+-- MAPPINGS BY MeSH CATEGORY (G = Phenomena and Processes)
 -- =====================================================
 
 -- G09: Circulatory and Respiratory Physiological Phenomena
@@ -183,7 +183,7 @@ INSERT INTO vocab.mesh_to_snomed (mesh_tree_prefix, snomed_code, description, co
 ('G09.772', '418112009', 'Respiratory Physiological Phenomena', 0.70),
 
 -- =====================================================
--- MAPEOS POR CATEGORÍA MeSH (N = Health Care)
+-- MAPPINGS BY MeSH CATEGORY (N = Health Care)
 -- =====================================================
 
 -- N02.421.143: Critical Care → Critical care medicine
@@ -198,14 +198,14 @@ INSERT INTO vocab.mesh_to_snomed (mesh_tree_prefix, snomed_code, description, co
 -- N02.421.784: Rehabilitation → Rehabilitation medicine
 ('N02.421.784', '394602003', 'Rehabilitation', 0.90),
 
--- N06.850.520: Forensic Medicine → Medical specialty (OTHER) - Medicina Legal
+-- N06.850.520: Forensic Medicine -> Medical specialty (OTHER) - Forensic Medicine
 ('N06.850.520', '394733009', 'Forensic Medicine', 0.85),
 
 -- =====================================================
--- MAPEOS ADICIONALES (Subcategorías específicas)
+-- ADDITIONAL MAPPINGS (specific subcategories)
 -- =====================================================
 
--- Subcategorías de Neoplasms (C04)
+-- Neoplasms subcategories (C04)
 ('C04.588.149', '394579002', 'Breast Neoplasms (cardiology overlap)', 0.60),
 ('C04.588.180', '394584008', 'Colorectal Neoplasms (gastro)', 0.80),
 ('C04.588.274', '418112009', 'Lung Neoplasms (pulmonary)', 0.75),
@@ -216,7 +216,7 @@ INSERT INTO vocab.mesh_to_snomed (mesh_tree_prefix, snomed_code, description, co
 ('C04.588.614', '394594003', 'Ocular Neoplasms', 0.85),
 ('C04.588.839', '394582007', 'Skin Neoplasms', 0.85),
 
--- Subcategorías de Nervous System (C10)
+-- Nervous System subcategories (C10)
 ('C10.228', '394591006', 'Central Nervous System Diseases', 0.90),
 ('C10.228.140', '394591006', 'Brain Diseases', 0.95),
 ('C10.228.140.300', '394591006', 'Cerebrovascular Disorders', 0.90),
@@ -226,7 +226,7 @@ INSERT INTO vocab.mesh_to_snomed (mesh_tree_prefix, snomed_code, description, co
 ('C10.668', '394591006', 'Neuromuscular Diseases', 0.85),
 ('C10.720', '394610002', 'Peripheral Nervous System Diseases (surgical)', 0.75),
 
--- Subcategorías de Cardiovascular (C14)
+-- Cardiovascular subcategories (C14)
 ('C14.280.067', '394579002', 'Arrhythmias, Cardiac', 0.95),
 ('C14.280.238', '394579002', 'Cardiomyopathies', 0.95),
 ('C14.280.383', '394579002', 'Heart Defects, Congenital', 0.90),
@@ -237,7 +237,7 @@ INSERT INTO vocab.mesh_to_snomed (mesh_tree_prefix, snomed_code, description, co
 ('C14.907.253', '408463005', 'Embolism and Thrombosis', 0.85),
 ('C14.907.940', '408463005', 'Venous Thrombosis', 0.90),
 
--- Subcategorías de Digestive System (C06)
+-- Digestive System subcategories (C06)
 ('C06.130', '394584008', 'Biliary Tract Diseases', 0.90),
 ('C06.198', '394584008', 'Digestive System Abnormalities', 0.85),
 ('C06.267', '394584008', 'Esophageal Diseases', 0.95),
@@ -246,7 +246,7 @@ INSERT INTO vocab.mesh_to_snomed (mesh_tree_prefix, snomed_code, description, co
 ('C06.552', '394584008', 'Liver Diseases', 0.95),
 ('C06.689', '394584008', 'Pancreatic Diseases', 0.90),
 
--- Subcategorías de Respiratory (C08)
+-- Respiratory subcategories (C08)
 ('C08.127', '418112009', 'Bronchial Diseases', 0.95),
 ('C08.381', '418112009', 'Lung Diseases', 0.95),
 ('C08.381.495', '418112009', 'Lung Diseases, Interstitial', 0.90),
@@ -254,13 +254,13 @@ INSERT INTO vocab.mesh_to_snomed (mesh_tree_prefix, snomed_code, description, co
 ('C08.618', '418112009', 'Respiration Disorders', 0.85),
 ('C08.730', '418112009', 'Respiratory Tract Infections', 0.85),
 
--- Subcategorías de Endocrine (C19)
+-- Endocrine subcategories (C19)
 ('C19.246', '394583002', 'Diabetes Mellitus', 0.95),
 ('C19.700', '394583002', 'Thyroid Diseases', 0.95),
 ('C19.053', '394583002', 'Adrenal Gland Diseases', 0.90),
 ('C19.391', '394583002', 'Gonadal Disorders', 0.85),
 
--- Subcategorías de Musculoskeletal (C05)
+-- Musculoskeletal subcategories (C05)
 ('C05.116', '394801008', 'Bone Diseases', 0.85),
 ('C05.550', '394810000', 'Joint Diseases', 0.90),
 ('C05.651', '394810000', 'Muscular Diseases', 0.85),
@@ -269,29 +269,29 @@ INSERT INTO vocab.mesh_to_snomed (mesh_tree_prefix, snomed_code, description, co
 ('C05.550.114', '394810000', 'Arthritis', 0.95),
 ('C05.550.114.606', '394810000', 'Arthritis, Rheumatoid', 0.95),
 
--- Subcategorías de Kidney/Urinary (C12/C13)
+-- Kidney/Urinary subcategories (C12/C13)
 ('C12.777.419', '394589003', 'Kidney Diseases', 0.95),
 ('C12.777.419.403', '394589003', 'Glomerulonephritis', 0.95),
 ('C12.777.419.570', '394589003', 'Nephrosis', 0.90),
 ('C12.777.419.780', '394589003', 'Renal Insufficiency', 0.95),
 
--- Subcategorías de Pediatrics
+-- Pediatrics subcategories
 ('C16.614', '394537008', 'Neonatal Diseases', 0.95),
 ('C16.300', '394580004', 'Genetic Diseases, Inborn', 0.90),
 
--- Subcategorías de Mental Disorders (F03)
+-- Mental Disorders subcategories (F03)
 ('F03.087', '394587001', 'Anxiety Disorders', 0.90),
 ('F03.300', '394587001', 'Dissociative Disorders', 0.85),
 ('F03.550', '394587001', 'Mood Disorders', 0.95),
 ('F03.550.325', '394587001', 'Depression', 0.95),
 ('F03.600', '394587001', 'Neurotic Disorders', 0.85),
--- F03.625 ya definido arriba como Child and Adolescent Mental Disorders
+-- F03.625 already defined above as Child and Adolescent Mental Disorders
 ('F03.700', '394587001', 'Schizophrenia Spectrum', 0.95),
 ('F03.875', '394587001', 'Somatoform Disorders', 0.80),
 ('F03.900', '408468001', 'Substance-Related Disorders', 0.85),
 
 -- =====================================================
--- MAPEOS POR CATEGORÍA MeSH (A = Anatomy - para investigación)
+-- MAPPINGS BY MeSH CATEGORY (A = Anatomy - for research)
 -- =====================================================
 
 ('A01.923', '408463005', 'Vascular System anatomy research', 0.60),
@@ -308,7 +308,7 @@ INSERT INTO vocab.mesh_to_snomed (mesh_tree_prefix, snomed_code, description, co
 ('A15', '394803006', 'Hemic and Immune Systems anatomy', 0.60),
 
 -- =====================================================
--- MAPEOS POR CATEGORÍA MeSH (D = Chemicals and Drugs)
+-- MAPPINGS BY MeSH CATEGORY (D = Chemicals and Drugs)
 -- =====================================================
 
 ('D27.505.954.248', '394593009', 'Antineoplastic Agents', 0.75),
@@ -325,7 +325,7 @@ INSERT INTO vocab.mesh_to_snomed (mesh_tree_prefix, snomed_code, description, co
 ('D27.505.696.663', '394587001', 'Psychotropic Drugs', 0.75),
 
 -- =====================================================
--- MAPEOS POR CATEGORÍA MeSH (B = Organisms - for microbiology)
+-- MAPPINGS BY MeSH CATEGORY (B = Organisms - for microbiology)
 -- =====================================================
 
 ('B01', '408454008', 'Eukaryota (microbiology)', 0.60),
@@ -334,7 +334,7 @@ INSERT INTO vocab.mesh_to_snomed (mesh_tree_prefix, snomed_code, description, co
 ('B04', '394807007', 'Viruses (infectious diseases)', 0.75),
 
 -- =====================================================
--- MAPEOS POR CATEGORÍA MeSH (H = Disciplines and Occupations)
+-- MAPPINGS BY MeSH CATEGORY (H = Disciplines and Occupations)
 -- =====================================================
 
 ('H02.403', '394821009', 'Occupational Medicine research', 0.85),
@@ -342,27 +342,27 @@ INSERT INTO vocab.mesh_to_snomed (mesh_tree_prefix, snomed_code, description, co
 ('H02.403.720', '408443003', 'Sports Medicine', 0.85);
 
 -- =====================================================
--- ÍNDICES
+-- INDEXES
 -- =====================================================
 
 CREATE INDEX idx_mesh_to_snomed_prefix ON vocab.mesh_to_snomed(mesh_tree_prefix);
 CREATE INDEX idx_mesh_to_snomed_snomed ON vocab.mesh_to_snomed(snomed_code);
 
--- Índice para búsquedas por prefijo (LIKE 'C14%')
+-- Index for prefix lookups (LIKE 'C14%')
 CREATE INDEX idx_mesh_to_snomed_prefix_pattern ON vocab.mesh_to_snomed(mesh_tree_prefix varchar_pattern_ops);
 
 -- =====================================================
--- COMENTARIOS DE DOCUMENTACIÓN
+-- DOCUMENTATION COMMENTS
 -- =====================================================
 
-COMMENT ON TABLE vocab.mesh_to_snomed IS 'Mapeo de prefijos MeSH Tree Number a códigos SNOMED CT de especialidades médicas';
-COMMENT ON COLUMN vocab.mesh_to_snomed.mesh_tree_prefix IS 'Prefijo del tree number MeSH (ej: C14, C14.280). Un artículo con MeSH tree C14.280.647 matchea con C14.280 y C14';
-COMMENT ON COLUMN vocab.mesh_to_snomed.snomed_code IS 'Código SNOMED CT de la especialidad médica';
-COMMENT ON COLUMN vocab.mesh_to_snomed.description IS 'Descripción de la categoría MeSH';
-COMMENT ON COLUMN vocab.mesh_to_snomed.confidence IS 'Nivel de confianza del mapeo (0.00-1.00). Mapeos directos ~0.90, mapeos secundarios ~0.70';
+COMMENT ON TABLE vocab.mesh_to_snomed IS 'Mapping of MeSH Tree Number prefixes to SNOMED CT medical specialty codes';
+COMMENT ON COLUMN vocab.mesh_to_snomed.mesh_tree_prefix IS 'MeSH tree number prefix (e.g. C14, C14.280). An article with MeSH tree C14.280.647 matches both C14.280 and C14';
+COMMENT ON COLUMN vocab.mesh_to_snomed.snomed_code IS 'SNOMED CT code of the medical specialty';
+COMMENT ON COLUMN vocab.mesh_to_snomed.description IS 'MeSH category description';
+COMMENT ON COLUMN vocab.mesh_to_snomed.confidence IS 'Mapping confidence level (0.00-1.00). Direct mappings ~0.90, secondary mappings ~0.70';
 
 -- =====================================================
--- FUNCIÓN AUXILIAR: Encontrar especialidades para un tree number
+-- HELPER FUNCTION: Find specialties for a tree number
 -- =====================================================
 
 DROP FUNCTION IF EXISTS get_specialties_for_mesh_tree(VARCHAR);
@@ -390,17 +390,17 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-COMMENT ON FUNCTION get_specialties_for_mesh_tree IS 'Dado un tree number MeSH, retorna las especialidades SNOMED CT asociadas ordenadas por especificidad y confianza';
+COMMENT ON FUNCTION get_specialties_for_mesh_tree IS 'Given a MeSH tree number, returns the associated SNOMED CT specialties ordered by specificity and confidence';
 
 -- =====================================================
--- EJEMPLO DE USO
+-- USAGE EXAMPLE
 -- =====================================================
 
--- Ejemplo: Encontrar especialidades para un artículo con MeSH "Heart Failure" (tree: C14.280.434)
+-- Example: Find specialties for an article with MeSH "Heart Failure" (tree: C14.280.434)
 -- SELECT * FROM get_specialties_for_mesh_tree('C14.280.434');
--- Resultado: Cardiology (C14.280 match), Cardiology (C14 match)
+-- Result: Cardiology (C14.280 match), Cardiology (C14 match)
 
--- Ejemplo: Clasificar un artículo con múltiples MeSH terms
+-- Example: Classify an article with multiple MeSH terms
 -- WITH article_mesh AS (
 --     SELECT unnest(string_to_array('C14.280.434;C08.381', ';')) as tree_num
 -- )

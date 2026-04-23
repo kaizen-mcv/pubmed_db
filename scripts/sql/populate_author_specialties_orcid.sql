@@ -1,17 +1,17 @@
 -- ============================================================================
--- Poblar especialidades de autores con ORCID
--- Usando afiliaciones como fuente + sinónimos de especialidades
+-- Populate specialties for authors with ORCID
+-- Using affiliations as source + specialty synonyms
 -- ============================================================================
 
--- Vaciar tabla existente
+-- Truncate existing table
 TRUNCATE sm_result.author_specialties;
 
--- Insertar especialidades detectadas en afiliaciones de autores con ORCID
--- Buscamos por: name_en, name_es Y sinónimos
+-- Insert specialties detected in affiliations of ORCID authors
+-- Search by: name_en, name_es AND synonyms
 INSERT INTO sm_result.author_specialties (author_name, author_orcid, snomed_code, confidence, article_count)
 WITH specialty_search_terms AS (
-    -- Generar todos los términos de búsqueda por especialidad
-    -- Incluye: name_en, name_es, y cada sinónimo separado por ;
+    -- Generate all search terms per specialty
+    -- Includes: name_en, name_es, and each synonym separated by ;
     SELECT snomed_code, name_en as search_term FROM vocab.snomed_specialties WHERE name_en IS NOT NULL
     UNION
     SELECT snomed_code, name_es as search_term FROM vocab.snomed_specialties WHERE name_es IS NOT NULL
@@ -20,7 +20,7 @@ WITH specialty_search_terms AS (
     FROM vocab.snomed_specialties WHERE synonyms IS NOT NULL AND synonyms != ''
 ),
 author_specialty_matches AS (
-    -- Encontrar todas las coincidencias autor-especialidad
+    -- Find all author-specialty matches
     SELECT DISTINCT
         ao.display_name as author_name,
         ao.author_orcid,
@@ -34,7 +34,7 @@ author_specialty_matches AS (
       AND st.search_term != ''
       AND pa.affiliation ILIKE '%' || st.search_term || '%'
 )
--- Agrupar por autor y especialidad, contando artículos
+-- Group by author and specialty, counting articles
 SELECT
     author_name,
     author_orcid,
@@ -44,40 +44,40 @@ SELECT
 FROM author_specialty_matches
 GROUP BY author_name, author_orcid, snomed_code;
 
--- Estadísticas
-SELECT '=== RESUMEN ===' as info;
+-- Statistics
+SELECT '=== SUMMARY ===' as info;
 
 SELECT
-    COUNT(DISTINCT author_orcid) as autores_con_especialidad,
-    COUNT(*) as total_asignaciones,
-    COUNT(DISTINCT snomed_code) as especialidades_distintas
+    COUNT(DISTINCT author_orcid) as authors_with_specialty,
+    COUNT(*) as total_assignments,
+    COUNT(DISTINCT snomed_code) as distinct_specialties
 FROM sm_result.author_specialties;
 
 SELECT
-    (SELECT COUNT(*) FROM sm_result.authors_orcid) as total_autores_orcid,
-    COUNT(DISTINCT author_orcid) as autores_con_especialidad,
-    ROUND(100.0 * COUNT(DISTINCT author_orcid) / (SELECT COUNT(*) FROM sm_result.authors_orcid), 1) as porcentaje
+    (SELECT COUNT(*) FROM sm_result.authors_orcid) as total_authors_orcid,
+    COUNT(DISTINCT author_orcid) as authors_with_specialty,
+    ROUND(100.0 * COUNT(DISTINCT author_orcid) / (SELECT COUNT(*) FROM sm_result.authors_orcid), 1) as percentage
 FROM sm_result.author_specialties;
 
-SELECT '=== TOP 10 ESPECIALIDADES ===' as info;
+SELECT '=== TOP 10 SPECIALTIES ===' as info;
 
 SELECT
-    ss.name_es as especialidad,
-    COUNT(DISTINCT asp.author_orcid) as autores
+    ss.name_es as specialty,
+    COUNT(DISTINCT asp.author_orcid) as authors
 FROM sm_result.author_specialties asp
 JOIN vocab.snomed_specialties ss ON asp.snomed_code = ss.snomed_code
 GROUP BY ss.snomed_code, ss.name_es
-ORDER BY autores DESC
+ORDER BY authors DESC
 LIMIT 10;
 
-SELECT '=== AUTORES CON MÁS ESPECIALIDADES ===' as info;
+SELECT '=== AUTHORS WITH MOST SPECIALTIES ===' as info;
 
 SELECT
     author_name,
     author_orcid,
-    COUNT(*) as num_especialidades
+    COUNT(*) as num_specialties
 FROM sm_result.author_specialties
 GROUP BY author_name, author_orcid
 HAVING COUNT(*) > 1
-ORDER BY num_especialidades DESC
+ORDER BY num_specialties DESC
 LIMIT 10;

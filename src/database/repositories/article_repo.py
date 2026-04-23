@@ -1,7 +1,7 @@
 """
-Repositorio de artículos.
+Articles repository.
 
-CRUD para la tabla pubmed_articles (esquema simplificado).
+CRUD for the pubmed_articles table (simplified schema).
 """
 
 from typing import Optional
@@ -17,20 +17,20 @@ from src.models.article import Article
 
 class ArticleRepository:
     """
-    Repositorio para operaciones CRUD de artículos.
+    Repository for CRUD operations on articles.
     """
 
     @staticmethod
     def insert_or_update(cur: cursor, article: Article) -> int:
         """
-        Inserta un artículo o actualiza si ya existe.
+        Insert an article or update it if it already exists.
 
         Args:
-            cur: Cursor de base de datos
-            article: Objeto Article a guardar
+            cur: Database cursor
+            article: Article object to store
 
         Returns:
-            pubmed_id del artículo
+            pubmed_id of the article
         """
         cur.execute("""
             INSERT INTO raw.pubmed_articles (
@@ -75,14 +75,14 @@ class ArticleRepository:
     @staticmethod
     def exists(cur: cursor, pubmed_id: int) -> bool:
         """
-        Verifica si un artículo existe.
+        Check whether an article exists.
 
         Args:
-            cur: Cursor de base de datos
-            pubmed_id: ID del artículo en PubMed
+            cur: Database cursor
+            pubmed_id: Article ID in PubMed
 
         Returns:
-            True si existe
+            True if it exists
         """
         cur.execute(
             "SELECT 1 FROM raw.pubmed_articles WHERE pubmed_id = %s",
@@ -93,13 +93,13 @@ class ArticleRepository:
     @staticmethod
     def count(cur: cursor) -> int:
         """
-        Cuenta el total de artículos.
+        Count the total number of articles.
 
         Args:
-            cur: Cursor de base de datos
+            cur: Database cursor
 
         Returns:
-            Número total de artículos
+            Total number of articles
         """
         cur.execute("SELECT COUNT(*) FROM raw.pubmed_articles")
         return cur.fetchone()[0]

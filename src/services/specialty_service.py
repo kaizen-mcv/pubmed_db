@@ -1,9 +1,9 @@
 """
-Servicio de inferencia de especialidades médicas.
+Medical specialty inference service.
 
-Infiere especialidades SNOMED CT basándose únicamente en la afiliación
-del autor, que es el único campo 100% fiable para determinar la
-especialidad de cada autor individual.
+Infers SNOMED CT specialties based solely on the author's
+affiliation, which is the only 100% reliable field to determine
+the specialty of each individual author.
 """
 
 from typing import Dict, List, Optional
@@ -18,22 +18,22 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
 @dataclass
 class SpecialtyMatch:
-    """Resultado de un match de especialidad."""
+    """Result of a specialty match."""
     snomed_code: str
     name_en: str
     name_es: Optional[str]
     confidence: float
     source: str  # 'affiliation'
-    detail: str  # Info adicional (patrón que matcheó)
+    detail: str  # Additional info (pattern that matched)
 
 
 class SpecialtyService:
     """
-    Servicio para inferir especialidades médicas de autores.
+    Service to infer medical specialties of authors.
 
-    Usa únicamente la afiliación del autor como fuente de inferencia,
-    ya que es el único campo que refleja directamente la especialidad
-    del autor (un artículo puede tener autores de múltiples especialidades).
+    Uses only the author's affiliation as inference source,
+    since it is the only field that directly reflects the
+    author's specialty (an article may have authors of multiple specialties).
     """
 
     @classmethod
@@ -44,35 +44,35 @@ class SpecialtyService:
         min_confidence: float = 0.5
     ) -> List[Dict]:
         """
-        Infiere las especialidades de los autores de un artículo.
+        Infer the specialties of the authors of an article.
 
-        Analiza las afiliaciones de los autores y busca coincidencias
-        con especialidades SNOMED en la tabla de mapeo.
+        Analyzes author affiliations and searches for matches
+        with SNOMED specialties in the mapping table.
 
         Args:
-            cur: Cursor de base de datos
-            pubmed_id: ID del artículo PubMed
-            min_confidence: Score mínimo para incluir
+            cur: Database cursor
+            pubmed_id: PubMed article ID
+            min_confidence: Minimum score to include
 
         Returns:
-            Lista de dicts con snomed_code, name_en, name_es, confidence, affiliation
+            List of dicts with snomed_code, name_en, name_es, confidence, affiliation
         """
-        # Obtener afiliaciones de autores del artículo
+        # Get affiliations of article authors
         affiliations = cls._get_author_affiliations(cur, pubmed_id)
 
         if not affiliations:
             return []
 
-        # Buscar matches para cada afiliación
+        # Find matches for each affiliation
         all_matches: List[SpecialtyMatch] = []
         for affiliation in affiliations:
             matches = cls._match_from_affiliation(cur, affiliation)
             all_matches.extend(matches)
 
-        # Combinar y agregar scores
+        # Combine and aggregate scores
         combined = cls._combine_matches(all_matches)
 
-        # Filtrar por confianza mínima
+        # Filter by minimum confidence
         results = [
             r for r in combined
             if r['confidence'] >= min_confidence
@@ -83,7 +83,7 @@ class SpecialtyService:
 
     @classmethod
     def _get_author_affiliations(cls, cur: cursor, pubmed_id: int) -> List[str]:
-        """Obtiene las afiliaciones de los autores del artículo."""
+        """Get the affiliations of the article authors."""
         cur.execute("""
             SELECT DISTINCT affiliation
             FROM raw.pubmed_authors
@@ -98,7 +98,7 @@ class SpecialtyService:
         cur: cursor,
         affiliation: str
     ) -> List[SpecialtyMatch]:
-        """Encuentra especialidades desde la afiliación."""
+        """Find specialties from the affiliation."""
         matches = []
 
         if not affiliation:
@@ -117,7 +117,7 @@ class SpecialtyService:
         """, (affiliation,))
 
         for row in cur.fetchall():
-            # Fidelidad: 'snomed' = 1.0, 'simplified' = 0.9
+            # Fidelity: 'snomed' = 1.0, 'simplified' = 0.9
             confidence = 1.0 if row[2] == 'snomed' else 0.9
 
             matches.append(SpecialtyMatch(
@@ -137,14 +137,14 @@ class SpecialtyService:
         matches: List[SpecialtyMatch]
     ) -> List[Dict]:
         """
-        Combina múltiples matches y calcula score final.
+        Combine multiple matches and compute final score.
 
-        Agrupa por snomed_code y usa la mejor confidence encontrada.
+        Groups by snomed_code and uses the best confidence found.
         """
         if not matches:
             return []
 
-        # Agrupar por snomed_code
+        # Group by snomed_code
         by_code: Dict[str, Dict] = {}
 
         for match in matches:
@@ -159,14 +159,14 @@ class SpecialtyService:
                     'affiliations': [match.detail],
                 }
             else:
-                # Mantener la mejor confidence
+                # Keep the best confidence
                 if match.confidence > by_code[code]['confidence']:
                     by_code[code]['confidence'] = match.confidence
-                # Agregar afiliación si es diferente
+                # Add affiliation if different
                 if match.detail not in by_code[code]['affiliations']:
                     by_code[code]['affiliations'].append(match.detail)
 
-        # Convertir a lista
+        # Convert to list
         results = []
         for code, data in by_code.items():
             results.append({
@@ -182,10 +182,10 @@ class SpecialtyService:
     @classmethod
     def get_specialty_stats(cls, cur: cursor) -> Dict:
         """
-        Obtiene estadísticas de la tabla de mapeo.
+        Get statistics of the mapping table.
 
         Returns:
-            Dict con conteos de la tabla de mapeo
+            Dict with counts from the mapping table
         """
         stats = {}
 

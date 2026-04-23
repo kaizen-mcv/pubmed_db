@@ -1,5 +1,5 @@
 """
-Gestor de conexiones a base de datos PostgreSQL.
+PostgreSQL database connection manager.
 """
 
 from contextlib import contextmanager
@@ -17,19 +17,19 @@ from config.settings import settings
 
 class DatabaseConnection:
     """
-    Gestor de conexiones a PostgreSQL.
+    PostgreSQL connection manager.
 
-    Proporciona:
-    - Conexión única reutilizable
-    - Context manager para transacciones
-    - Manejo automático de commits/rollbacks
+    Provides:
+    - Single reusable connection
+    - Context manager for transactions
+    - Automatic commit/rollback handling
     """
 
     _instance: Optional['DatabaseConnection'] = None
     _connection: Optional[connection] = None
 
     def __new__(cls):
-        """Singleton: solo una instancia de DatabaseConnection."""
+        """Singleton: only one DatabaseConnection instance."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
@@ -39,12 +39,12 @@ class DatabaseConnection:
 
     def get_connection(self) -> connection:
         """
-        Obtiene la conexión a la base de datos.
+        Get the database connection.
 
-        Crea una nueva conexión si no existe o está cerrada.
+        Creates a new connection if none exists or it is closed.
 
         Returns:
-            Conexión psycopg2
+            psycopg2 connection
         """
         if self._connection is None or self._connection.closed:
             self._connection = psycopg2.connect(**self._connection_params)
@@ -52,25 +52,25 @@ class DatabaseConnection:
 
     def get_cursor(self) -> cursor:
         """
-        Obtiene un cursor de la conexión.
+        Get a cursor from the connection.
 
         Returns:
-            Cursor psycopg2
+            psycopg2 cursor
         """
         return self.get_connection().cursor()
 
     def commit(self):
-        """Hace commit de la transacción actual."""
+        """Commit the current transaction."""
         if self._connection and not self._connection.closed:
             self._connection.commit()
 
     def rollback(self):
-        """Hace rollback de la transacción actual."""
+        """Roll back the current transaction."""
         if self._connection and not self._connection.closed:
             self._connection.rollback()
 
     def close(self):
-        """Cierra la conexión."""
+        """Close the connection."""
         if self._connection and not self._connection.closed:
             self._connection.close()
             self._connection = None
@@ -78,17 +78,17 @@ class DatabaseConnection:
     @contextmanager
     def transaction(self) -> Generator[cursor, None, None]:
         """
-        Context manager para transacciones.
+        Context manager for transactions.
 
-        Uso:
+        Usage:
             with db.transaction() as cur:
                 cur.execute("INSERT ...")
 
-        Hace commit automático si no hay errores,
-        rollback si hay excepción.
+        Commits automatically if no errors occur,
+        rolls back on exception.
 
         Yields:
-            Cursor de base de datos
+            Database cursor
         """
         cur = self.get_cursor()
         try:
@@ -103,13 +103,13 @@ class DatabaseConnection:
     @contextmanager
     def cursor_context(self) -> Generator[cursor, None, None]:
         """
-        Context manager para cursor sin auto-commit.
+        Context manager for a cursor without auto-commit.
 
-        Útil para operaciones que necesitan control manual
-        de transacciones.
+        Useful for operations that need manual transaction
+        control.
 
         Yields:
-            Cursor de base de datos
+            Database cursor
         """
         cur = self.get_cursor()
         try:
@@ -118,5 +118,5 @@ class DatabaseConnection:
             cur.close()
 
 
-# Instancia global
+# Global instance
 db = DatabaseConnection()

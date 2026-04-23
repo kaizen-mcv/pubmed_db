@@ -1,12 +1,12 @@
 """
-Sistema de logging centralizado para el proyecto PubMed.
+Centralized logging system for the PubMed project.
 
-Uso:
+Usage:
     from src.utils.logger import get_logger
 
     logger = get_logger(__name__)
-    logger.info("Mensaje informativo")
-    logger.warning("Advertencia")
+    logger.info("Informational message")
+    logger.warning("Warning")
     logger.error("Error", exc_info=True)
 """
 
@@ -17,7 +17,7 @@ from datetime import datetime
 from typing import Optional
 
 
-# Directorio de logs
+# Logs directory
 LOG_DIR = Path(__file__).parent.parent.parent / 'data' / 'logs'
 
 
@@ -27,64 +27,64 @@ def setup_logging(
     console: bool = True
 ) -> None:
     """
-    Configura el sistema de logging para todo el proyecto.
+    Configure the logging system for the whole project.
 
     Args:
-        log_level: Nivel de logging (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-        log_file: Nombre del archivo de log (None = auto-generar)
-        console: Si True, también muestra logs en consola
+        log_level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+        log_file: Log file name (None = auto-generate)
+        console: If True, also show logs in the console
     """
-    # Crear directorio de logs si no existe
+    # Create logs directory if it does not exist
     LOG_DIR.mkdir(parents=True, exist_ok=True)
 
-    # Nombre de archivo auto-generado si no se especifica
+    # Auto-generated file name if not specified
     if log_file is None:
         log_file = f"pubmed_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
 
     log_path = LOG_DIR / log_file
 
-    # Formato de logs
+    # Log format
     formatter = logging.Formatter(
         '%(asctime)s [%(levelname)s] %(name)s: %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S'
     )
 
-    # Handler para archivo
+    # File handler
     file_handler = logging.FileHandler(log_path, encoding='utf-8')
     file_handler.setFormatter(formatter)
 
     handlers = [file_handler]
 
-    # Handler para consola
+    # Console handler
     if console:
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setFormatter(formatter)
         handlers.append(console_handler)
 
-    # Configurar root logger
+    # Configure root logger
     logging.basicConfig(
         level=getattr(logging, log_level.upper()),
         handlers=handlers,
-        force=True  # Sobrescribir configuración previa
+        force=True  # Override previous configuration
     )
 
-    # Silenciar logs verbosos de librerías externas
+    # Silence verbose logs from external libraries
     logging.getLogger('urllib3').setLevel(logging.WARNING)
     logging.getLogger('Bio').setLevel(logging.WARNING)
 
 
 def get_logger(name: str) -> logging.Logger:
     """
-    Obtiene un logger con el nombre especificado.
+    Get a logger with the given name.
 
     Args:
-        name: Nombre del logger (normalmente __name__)
+        name: Logger name (usually __name__)
 
     Returns:
-        Logger configurado
+        Configured logger
     """
     return logging.getLogger(name)
 
 
-# Logger por defecto del proyecto
+# Default project logger
 logger = get_logger('pubmed')

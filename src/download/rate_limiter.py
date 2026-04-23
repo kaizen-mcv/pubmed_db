@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Módulo de rate limiting para cumplir con políticas de NCBI/PubMed.
+Rate limiting module to comply with NCBI/PubMed policies.
 
-Política oficial: https://www.ncbi.nlm.nih.gov/books/NBK25497/
-- Sin API Key: máx 3 requests/segundo
-- Con API Key: máx 10 requests/segundo
-- Horas off-peak (fines de semana, 9pm-5am EST): límites más flexibles
+Official policy: https://www.ncbi.nlm.nih.gov/books/NBK25497/
+- Without API Key: max 3 requests/second
+- With API Key: max 10 requests/second
+- Off-peak hours (weekends, 9pm-5am EST): more flexible limits
 """
 
 import time
@@ -16,9 +16,9 @@ from zoneinfo import ZoneInfo
 
 class RateLimiter:
     """
-    Gestor de rate limiting que cumple con políticas de NCBI.
+    Rate limiting manager that complies with NCBI policies.
 
-    Usa token bucket algorithm para control preciso de rate.
+    Uses token bucket algorithm for precise rate control.
     """
 
     def __init__(
@@ -29,43 +29,43 @@ class RateLimiter:
         min_delay_off_peak: float = 0.1,
     ):
         """
-        Inicializa el rate limiter.
+        Initialize the rate limiter.
 
         Args:
-            requests_per_second: Requests permitidos por segundo (peak hours)
-            requests_per_second_off_peak: Requests en horas off-peak
-            min_delay: Delay mínimo entre requests (segundos)
-            min_delay_off_peak: Delay mínimo en off-peak
+            requests_per_second: Requests allowed per second (peak hours)
+            requests_per_second_off_peak: Requests in off-peak hours
+            min_delay: Minimum delay between requests (seconds)
+            min_delay_off_peak: Minimum delay in off-peak
         """
         self.requests_per_second = requests_per_second
         self.requests_per_second_off_peak = requests_per_second_off_peak
         self.min_delay = min_delay
         self.min_delay_off_peak = min_delay_off_peak
 
-        # Estado interno
+        # Internal state
         self.last_request_time: Optional[float] = None
         self.request_count = 0
         self.total_wait_time = 0.0
 
-        # Timezone EST para detectar horas off-peak
+        # EST timezone to detect off-peak hours
         self.est_tz = ZoneInfo("US/Eastern")
 
     def is_off_peak_hours(self) -> bool:
         """
-        Detecta si estamos en horas off-peak según NCBI.
+        Detect whether we are in NCBI off-peak hours.
 
-        Off-peak: Weekends o entre 9pm-5am EST en días laborables.
+        Off-peak: Weekends or between 9pm-5am EST on weekdays.
 
         Returns:
-            True si estamos en horas off-peak
+            True if we are in off-peak hours
         """
         now_est = datetime.now(self.est_tz)
 
-        # Fin de semana (sábado=5, domingo=6)
+        # Weekend (Saturday=5, Sunday=6)
         if now_est.weekday() in [5, 6]:
             return True
 
-        # Entre 9pm (21:00) y 5am (05:00)
+        # Between 9pm (21:00) and 5am (05:00)
         hour = now_est.hour
         if hour >= 21 or hour < 5:
             return True
@@ -74,26 +74,26 @@ class RateLimiter:
 
     def wait_if_needed(self) -> float:
         """
-        Espera el tiempo necesario para cumplir con rate limit.
+        Wait the time required to comply with the rate limit.
 
         Returns:
-            Tiempo esperado en segundos
+            Time waited in seconds
         """
         if self.last_request_time is None:
             self.last_request_time = time.time()
             self.request_count += 1
             return 0.0
 
-        # Determinar delay según horario
+        # Determine delay based on schedule
         if self.is_off_peak_hours():
             min_delay = self.min_delay_off_peak
         else:
             min_delay = self.min_delay
 
-        # Calcular tiempo desde último request
+        # Compute time since last request
         elapsed = time.time() - self.last_request_time
 
-        # Esperar si no ha pasado suficiente tiempo
+        # Wait if not enough time has passed
         if elapsed < min_delay:
             wait_time = min_delay - elapsed
             time.sleep(wait_time)
@@ -101,7 +101,7 @@ class RateLimiter:
         else:
             wait_time = 0.0
 
-        # Actualizar estado
+        # Update state
         self.last_request_time = time.time()
         self.request_count += 1
 
@@ -109,10 +109,10 @@ class RateLimiter:
 
     def get_stats(self) -> dict:
         """
-        Retorna estadísticas del rate limiter.
+        Return rate limiter statistics.
 
         Returns:
-            Diccionario con estadísticas
+            Dictionary with statistics
         """
         return {
             "total_requests": self.request_count,
@@ -131,7 +131,7 @@ class RateLimiter:
         }
 
     def reset(self):
-        """Reinicia las estadísticas del rate limiter."""
+        """Reset the rate limiter statistics."""
         self.last_request_time = None
         self.request_count = 0
         self.total_wait_time = 0.0
@@ -139,37 +139,37 @@ class RateLimiter:
 
 class AdaptiveRateLimiter(RateLimiter):
     """
-    Rate limiter adaptativo que ajusta el rate según errores HTTP 429.
+    Adaptive rate limiter that adjusts the rate based on HTTP 429 errors.
 
-    Si recibimos 429 (Too Many Requests), reduce automáticamente el rate.
+    If we receive 429 (Too Many Requests), it automatically reduces the rate.
     """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.error_429_count = 0
-        self.rate_reduction_factor = 0.8  # Reducir al 80% tras error 429
+        self.rate_reduction_factor = 0.8  # Reduce to 80% after a 429 error
 
     def handle_429_error(self):
         """
-        Ajusta el rate limit tras recibir error 429.
+        Adjust the rate limit after receiving a 429 error.
 
-        Reduce el rate al 80% del actual y aumenta delays.
+        Reduces the rate to 80% of the current value and increases delays.
         """
         self.error_429_count += 1
 
-        # Reducir rate
+        # Reduce rate
         self.requests_per_second *= self.rate_reduction_factor
         self.requests_per_second_off_peak *= self.rate_reduction_factor
 
-        # Aumentar delays
+        # Increase delays
         self.min_delay /= self.rate_reduction_factor
         self.min_delay_off_peak /= self.rate_reduction_factor
 
-        # Esperar más tiempo antes del siguiente request
+        # Wait longer before the next request
         time.sleep(self.min_delay * 3)
 
     def get_stats(self) -> dict:
-        """Retorna estadísticas incluyendo errores 429."""
+        """Return statistics including 429 errors."""
         stats = super().get_stats()
         stats["error_429_count"] = self.error_429_count
         return stats

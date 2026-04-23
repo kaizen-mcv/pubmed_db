@@ -1,24 +1,23 @@
 #!/usr/bin/env python3
-"""
-Script de deduplicación de autores.
+"""Author deduplication script.
 
-Este script pobla las tablas sm_result.authors_orcid y sm_result.authors_norm
-a partir de los datos en raw.pubmed_authors.
+This script populates the sm_result.authors_orcid and sm_result.authors_norm
+tables from the data in raw.pubmed_authors.
 
-Proceso en 3 fases:
-1. ORCID directo: Autores con ORCID (100% fiable)
-2. Propagación de ORCID: Registros sin ORCID que coinciden en nombre+afiliación
-3. Normalización: Resto de autores agrupados por nombre normalizado
+Three-phase process:
+    1. Direct ORCID: Authors with ORCID (100% reliable).
+    2. ORCID propagation: Records without ORCID that match on name+affiliation.
+    3. Normalization: Remaining authors grouped by normalized name.
 
-Uso:
+Usage:
     python scripts/deduplicacion_autores.py [--dry-run] [--phase N]
 
-Opciones:
-    --dry-run       Solo mostrar estadísticas, no insertar datos
-    --phase N       Ejecutar solo fase N (1, 2 o 3)
-    --reset         Eliminar datos existentes antes de ejecutar
+Options:
+    --dry-run       Only show statistics, do not insert data.
+    --phase N       Execute only phase N (1, 2, or 3).
+    --reset         Remove existing data before executing.
 
-Documentación: docs/deduplicacion_autores.md
+Documentation: docs/deduplicacion_autores.md
 """
 
 import os
@@ -31,7 +30,7 @@ from typing import Dict, List, Tuple, Optional
 import psycopg2
 from psycopg2.extras import execute_values
 
-# Añadir directorio raíz al path
+# Add the root directory to the path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from config.settings import settings
@@ -39,41 +38,40 @@ from src.utils.name_normalizer import get_canonical_name, select_display_name
 
 
 # =============================================================================
-# CONFIGURACIÓN
+# CONFIGURATION
 # =============================================================================
 
-BATCH_SIZE = 10000  # Registros por lote de inserción
+BATCH_SIZE = 10000  # Records per insertion batch
 
 
 def get_connection():
-    """Obtiene conexión a la base de datos."""
+    """Gets a database connection."""
     config = settings.get_db_connection_params()
     return psycopg2.connect(**config)
 
 
 # =============================================================================
-# FASE 1: AUTORES CON ORCID
+# PHASE 1: AUTHORS WITH ORCID
 # =============================================================================
 
 def phase1_orcid_authors(conn, dry_run: bool = False) -> int:
-    """
-    Fase 1: Procesa autores con ORCID.
+    """Phase 1: Processes authors with ORCID.
 
-    Agrupa todos los registros por ORCID y crea un único autor por cada ORCID.
+    Groups all records by ORCID and creates a single author per ORCID.
 
     Args:
-        conn: Conexión a la base de datos
-        dry_run: Si True, solo muestra estadísticas
+        conn: Database connection.
+        dry_run: If True, only shows statistics.
 
     Returns:
-        Número de autores insertados
+        Number of authors inserted.
     """
     print("\n" + "=" * 60)
     print("FASE 1: Autores con ORCID")
     print("=" * 60)
 
     with conn.cursor() as cur:
-        # Obtener datos agrupados por ORCID
+        # Get data grouped by ORCID
         print("\nObteniendo datos de autores con ORCID...")
         cur.execute("""
             SELECT
@@ -96,12 +94,12 @@ def phase1_orcid_authors(conn, dry_run: bool = False) -> int:
             print("\n[DRY RUN] No se insertarán datos")
             return total
 
-        # Preparar datos para inserción
+        # Prepare data for insertion
         print("\nProcesando y normalizando nombres...")
         authors_data = []
 
         for orcid, name_variants, article_count, first_pub, last_pub in rows:
-            # Obtener frecuencias de cada variante
+            # Get frequency of each variant
             cur.execute("""
                 SELECT author_name, COUNT(*) as cnt
                 FROM raw.pubmed_authors
@@ -110,7 +108,7 @@ def phase1_orcid_authors(conn, dry_run: bool = False) -> int:
             """, (orcid,))
             name_counts = {row[0]: row[1] for row in cur.fetchall()}
 
-            # Seleccionar mejor nombre
+            # Pick the best name
             display_name = select_display_name(list(name_variants), name_counts)
             canonical_name = get_canonical_name(display_name)
 
@@ -124,7 +122,7 @@ def phase1_orcid_authors(conn, dry_run: bool = False) -> int:
                 last_pub
             ))
 
-        # Insertar en lotes
+        # Insert in batches
         print(f"\nInsertando {len(authors_data):,} autores en sm_result.authors_orcid...")
 
         for i in range(0, len(authors_data), BATCH_SIZE):
@@ -146,29 +144,28 @@ def phase1_orcid_authors(conn, dry_run: bool = False) -> int:
 
 
 # =============================================================================
-# FASE 2: PROPAGACIÓN DE ORCID
+# PHASE 2: ORCID PROPAGATION
 # =============================================================================
 
 def phase2_propagate_orcid(conn, dry_run: bool = False) -> int:
-    """
-    Fase 2: Propaga ORCID a registros sin ORCID.
+    """Phase 2: Propagates ORCID to records without ORCID.
 
-    Si un registro sin ORCID tiene el mismo nombre+afiliación que uno con ORCID,
-    se asocia al mismo autor.
+    If a record without ORCID has the same name+affiliation as one with ORCID,
+    it is associated with the same author.
 
     Args:
-        conn: Conexión a la base de datos
-        dry_run: Si True, solo muestra estadísticas
+        conn: Database connection.
+        dry_run: If True, only shows statistics.
 
     Returns:
-        Número de registros propagados
+        Number of records propagated.
     """
     print("\n" + "=" * 60)
     print("FASE 2: Propagación de ORCID")
     print("=" * 60)
 
     with conn.cursor() as cur:
-        # Encontrar coincidencias exactas nombre+afiliación
+        # Find exact name+affiliation matches
         print("\nBuscando coincidencias nombre+afiliación...")
         cur.execute("""
             SELECT DISTINCT
@@ -188,7 +185,7 @@ def phase2_propagate_orcid(conn, dry_run: bool = False) -> int:
         print(f"  → {len(matches):,} coincidencias encontradas")
 
         if dry_run:
-            # Contar registros que se beneficiarían
+            # Count records that would benefit
             cur.execute("""
                 SELECT COUNT(*)
                 FROM raw.pubmed_authors pa_sin
@@ -205,8 +202,8 @@ def phase2_propagate_orcid(conn, dry_run: bool = False) -> int:
             print("\n[DRY RUN] No se actualizarán datos")
             return len(matches)
 
-        # Esta fase no modifica tablas, solo informa
-        # La vinculación se hace en fase 3 al poblar authors_norm
+        # This phase does not modify tables, it just reports
+        # The linking is done in phase 3 when populating authors_norm
         print(f"\n✓ Fase 2 completada: {len(matches):,} coincidencias identificadas")
         print("  (Se usarán en Fase 3 para vincular autores)")
 
@@ -214,31 +211,30 @@ def phase2_propagate_orcid(conn, dry_run: bool = False) -> int:
 
 
 # =============================================================================
-# FASE 3: NORMALIZACIÓN DE NOMBRES
+# PHASE 3: NAME NORMALIZATION
 # =============================================================================
 
 def phase3_normalize_names(conn, dry_run: bool = False) -> int:
-    """
-    Fase 3: Agrupa autores por nombre normalizado.
+    """Phase 3: Groups authors by normalized name.
 
-    Crea un autor único por cada nombre canónico, vinculando con ORCID si existe.
+    Creates a single author per canonical name, linking with ORCID if present.
 
     Args:
-        conn: Conexión a la base de datos
-        dry_run: Si True, solo muestra estadísticas
+        conn: Database connection.
+        dry_run: If True, only shows statistics.
 
     Returns:
-        Número de autores insertados
+        Number of authors inserted.
     """
     print("\n" + "=" * 60)
     print("FASE 3: Normalización de nombres")
     print("=" * 60)
 
     with conn.cursor() as cur:
-        # Crear tabla temporal con nombres normalizados
+        # Create a temporary table with normalized names
         print("\nCreando índice de nombres normalizados...")
 
-        # Obtener todos los autores únicos con sus estadísticas
+        # Fetch all unique authors with their stats
         print("  Paso 1: Obteniendo datos de autores...")
         cur.execute("""
             SELECT
@@ -255,7 +251,7 @@ def phase3_normalize_names(conn, dry_run: bool = False) -> int:
         rows = cur.fetchall()
         print(f"  → {len(rows):,} combinaciones nombre/ORCID")
 
-        # Agrupar por nombre canónico
+        # Group by canonical name
         print("  Paso 2: Normalizando y agrupando nombres...")
         canonical_groups: Dict[str, Dict] = defaultdict(lambda: {
             'name_variants': set(),
@@ -289,7 +285,7 @@ def phase3_normalize_names(conn, dry_run: bool = False) -> int:
         print(f"  → {total_groups:,} nombres canónicos únicos")
 
         if dry_run:
-            # Estadísticas adicionales
+            # Additional stats
             with_orcid = sum(1 for g in canonical_groups.values() if g['orcids'])
             without_orcid = total_groups - with_orcid
             print(f"\n  Distribución:")
@@ -298,12 +294,12 @@ def phase3_normalize_names(conn, dry_run: bool = False) -> int:
             print("\n[DRY RUN] No se insertarán datos")
             return total_groups
 
-        # Obtener mapeo ORCID -> sm_author_id de authors_orcid
+        # Fetch mapping ORCID -> sm_author_id from authors_orcid
         print("  Paso 3: Obteniendo mapeo de ORCIDs...")
         cur.execute("SELECT author_orcid, sm_author_id FROM sm_result.authors_orcid")
         orcid_to_id = {row[0]: row[1] for row in cur.fetchall()}
 
-        # Preparar datos para inserción
+        # Prepare data for insertion
         print("  Paso 4: Preparando datos para inserción...")
         authors_data = []
 
@@ -311,15 +307,15 @@ def phase3_normalize_names(conn, dry_run: bool = False) -> int:
             name_variants = list(group['name_variants'])
             name_counts = dict(group['name_counts'])
 
-            # Seleccionar mejor nombre para mostrar
+            # Pick the best display name
             display_name = select_display_name(name_variants, name_counts)
 
-            # Determinar ORCID (si hay múltiples, usar el primero)
+            # Determine ORCID (if multiple, use the first)
             orcids = list(group['orcids'])
             author_orcid = orcids[0] if orcids else None
             orcid_author_id = orcid_to_id.get(author_orcid) if author_orcid else None
 
-            # Confianza: 1.0 si tiene ORCID, 0.7 si no
+            # Confidence: 1.0 if it has ORCID, 0.7 if not
             confidence = 1.0 if author_orcid else 0.7
 
             authors_data.append((
@@ -334,7 +330,7 @@ def phase3_normalize_names(conn, dry_run: bool = False) -> int:
                 group['last_pub']
             ))
 
-        # Insertar en lotes
+        # Insert in batches
         print(f"\nInsertando {len(authors_data):,} autores en sm_result.authors_norm...")
 
         for i in range(0, len(authors_data), BATCH_SIZE):
@@ -356,11 +352,11 @@ def phase3_normalize_names(conn, dry_run: bool = False) -> int:
 
 
 # =============================================================================
-# FUNCIONES AUXILIARES
+# HELPER FUNCTIONS
 # =============================================================================
 
 def reset_tables(conn):
-    """Elimina datos de las tablas de autores."""
+    """Removes data from the author tables."""
     print("\nEliminando datos existentes...")
     with conn.cursor() as cur:
         cur.execute("TRUNCATE sm_result.authors_norm CASCADE")
@@ -370,7 +366,7 @@ def reset_tables(conn):
 
 
 def show_statistics(conn):
-    """Muestra estadísticas finales."""
+    """Displays final statistics."""
     print("\n" + "=" * 60)
     print("ESTADÍSTICAS FINALES")
     print("=" * 60)
@@ -417,21 +413,21 @@ def show_statistics(conn):
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Deduplicación de autores de PubMed',
+        description='PubMed author deduplication',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
-Ejemplos:
-  python scripts/deduplicacion_autores.py --dry-run     # Ver estadísticas
-  python scripts/deduplicacion_autores.py --reset       # Ejecutar todo desde cero
-  python scripts/deduplicacion_autores.py --phase 1     # Solo fase 1
+Examples:
+  python scripts/deduplicacion_autores.py --dry-run     # Show statistics
+  python scripts/deduplicacion_autores.py --reset       # Run everything from scratch
+  python scripts/deduplicacion_autores.py --phase 1     # Only phase 1
         """
     )
     parser.add_argument('--dry-run', action='store_true',
-                        help='Solo mostrar estadísticas, no insertar')
+                        help='Only show statistics, do not insert')
     parser.add_argument('--phase', type=int, choices=[1, 2, 3],
-                        help='Ejecutar solo una fase específica')
+                        help='Run only a specific phase')
     parser.add_argument('--reset', action='store_true',
-                        help='Eliminar datos existentes antes de ejecutar')
+                        help='Remove existing data before executing')
 
     args = parser.parse_args()
 

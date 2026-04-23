@@ -1,4 +1,4 @@
-# Módulos de descarga de PubMed
+# PubMed download modules
 from .pubmed_client import PubMedClient
 from .batch_downloader import PubMedBatchDownloader
 from .rate_limiter import RateLimiter, AdaptiveRateLimiter

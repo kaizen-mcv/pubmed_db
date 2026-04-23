@@ -1,10 +1,10 @@
 """
-Módulo de normalización de nombres de autores.
+Author name normalization module.
 
-Este módulo proporciona funciones para normalizar nombres de autores,
-permitiendo identificar variaciones del mismo nombre como una única entidad.
+This module provides functions to normalize author names, so that
+variations of the same name can be identified as a single entity.
 
-Documentación: docs/deduplicacion_autores.md
+Documentation: docs/deduplicacion_autores.md
 """
 
 import re
@@ -12,114 +12,114 @@ import unicodedata
 from typing import List, Dict, Optional, Tuple
 
 
-# Variantes de "María" que deben normalizarse
+# "María" variants that must be normalized
 MARIA_VARIANTS = ['mª', 'ma', 'm.ª', 'm.a', 'mᵃ', 'm.', 'ma.']
 
 
 def remove_accents(text: str) -> str:
     """
-    Elimina acentos y caracteres especiales de un texto.
+    Remove accents and special characters from a text.
 
     Args:
-        text: Texto con posibles acentos
+        text: Text that may contain accents
 
     Returns:
-        Texto sin acentos (ej: "García" -> "Garcia")
+        Text without accents (e.g. "García" -> "Garcia")
     """
-    # Normalización NFD: separa caracteres base de sus marcas diacríticas
+    # NFD normalization: splits base characters from their diacritical marks
     nfkd_form = unicodedata.normalize('NFKD', text)
-    # Filtrar solo caracteres ASCII
+    # Keep only ASCII characters
     return ''.join(c for c in nfkd_form if not unicodedata.combining(c))
 
 
 def normalize_maria(name: str) -> str:
     """
-    Normaliza las diferentes abreviaturas de "María".
+    Normalize the different abbreviations of "María".
 
     Args:
-        name: Nombre que puede contener variantes de María
+        name: Name that may contain María variants
 
     Returns:
-        Nombre con María normalizado
+        Name with María normalized
     """
     name_lower = name.lower()
     for variant in MARIA_VARIANTS:
         if variant in name_lower:
-            # Reemplazar manteniendo el caso original si es posible
+            # Replace while preserving the original case if possible
             name_lower = name_lower.replace(variant, 'maria')
     return name_lower
 
 
 def normalize_compound_names(name: str) -> str:
     """
-    Normaliza apellidos compuestos y partículas.
+    Normalize compound surnames and particles.
 
-    - Convierte guiones a espacios
-    - Normaliza partículas (de, de la, del)
+    - Convert hyphens to spaces
+    - Normalize particles (de, de la, del)
 
     Args:
-        name: Nombre con posibles guiones o partículas
+        name: Name that may contain hyphens or particles
 
     Returns:
-        Nombre normalizado
+        Normalized name
     """
-    # Convertir guiones a espacios
+    # Convert hyphens to spaces
     name = name.replace('-', ' ')
 
-    # Normalizar partículas (mantener en minúsculas)
-    # Ya está en minúsculas después de otros pasos
+    # Normalize particles (keep lowercase)
+    # Already lowercase after the previous steps
     return name
 
 
 def normalize_punctuation(name: str) -> str:
     """
-    Elimina puntuación innecesaria.
+    Remove unnecessary punctuation.
 
     Args:
-        name: Nombre con posible puntuación
+        name: Name that may contain punctuation
 
     Returns:
-        Nombre sin puntuación extra
+        Name without extra punctuation
     """
-    # Eliminar puntos (excepto los que son parte de abreviaturas)
-    name = re.sub(r'\.(?!\s|$)', '', name)  # Puntos no seguidos de espacio o final
-    name = name.replace('.', '')  # Puntos restantes
+    # Remove periods (except those that are part of abbreviations)
+    name = re.sub(r'\.(?!\s|$)', '', name)  # Periods not followed by space or end
+    name = name.replace('.', '')  # Remaining periods
 
     return name
 
 
 def normalize_spaces(name: str) -> str:
     """
-    Normaliza espacios múltiples y elimina espacios al inicio/final.
+    Normalize multiple spaces and strip leading/trailing whitespace.
 
     Args:
-        name: Nombre con posibles espacios extra
+        name: Name that may contain extra spaces
 
     Returns:
-        Nombre con espacios normalizados
+        Name with normalized spaces
     """
     return ' '.join(name.split())
 
 
 def get_canonical_name(name: str) -> str:
     """
-    Genera el nombre canónico para comparación y deduplicación.
+    Generate the canonical name used for comparison and deduplication.
 
-    Este es el nombre que se usa como clave para identificar autores únicos.
+    This is the name used as a key to identify unique authors.
 
-    Pasos:
-    1. Convertir a minúsculas
-    2. Eliminar acentos
-    3. Normalizar abreviaturas de María
-    4. Normalizar apellidos compuestos (guiones -> espacios)
-    5. Eliminar puntuación
-    6. Normalizar espacios
+    Steps:
+    1. Lowercase
+    2. Remove accents
+    3. Normalize María abbreviations
+    4. Normalize compound surnames (hyphens -> spaces)
+    5. Remove punctuation
+    6. Normalize spaces
 
     Args:
-        name: Nombre original del autor
+        name: Original author name
 
     Returns:
-        Nombre canónico (lowercase, sin acentos, normalizado)
+        Canonical name (lowercase, no accents, normalized)
 
     Examples:
         >>> get_canonical_name("García-Pavia, Pablo")
@@ -137,19 +137,19 @@ def get_canonical_name(name: str) -> str:
     # 1. Lowercase
     name = name.lower()
 
-    # 2. Normalizar María (antes de eliminar acentos)
+    # 2. Normalize María (before removing accents)
     name = normalize_maria(name)
 
-    # 3. Eliminar acentos
+    # 3. Remove accents
     name = remove_accents(name)
 
-    # 4. Normalizar compuestos
+    # 4. Normalize compound names
     name = normalize_compound_names(name)
 
-    # 5. Eliminar puntuación
+    # 5. Remove punctuation
     name = normalize_punctuation(name)
 
-    # 6. Normalizar espacios
+    # 6. Normalize spaces
     name = normalize_spaces(name)
 
     return name
@@ -157,28 +157,28 @@ def get_canonical_name(name: str) -> str:
 
 def is_initial_only(name_part: str) -> bool:
     """
-    Verifica si una parte del nombre es solo una inicial.
+    Check whether a name part is only an initial.
 
     Args:
-        name_part: Parte del nombre a verificar
+        name_part: Name part to check
 
     Returns:
-        True si es solo inicial (ej: "J", "A M")
+        True if it is only an initial (e.g. "J", "A M")
     """
-    # Eliminar espacios y verificar si son solo letras mayúsculas
+    # Remove spaces and check if only uppercase letters remain
     clean = name_part.replace(' ', '').replace('.', '')
     return len(clean) <= 2 and clean.isupper()
 
 
 def has_full_name(name: str) -> bool:
     """
-    Verifica si el nombre contiene un nombre completo (no solo iniciales).
+    Check whether the name contains a full name (not just initials).
 
     Args:
-        name: Nombre completo "Apellido, Nombre"
+        name: Full name "Lastname, Forename"
 
     Returns:
-        True si tiene nombre completo
+        True if it has a full name
     """
     if ',' not in name:
         return True
@@ -193,35 +193,35 @@ def has_full_name(name: str) -> bool:
 
 def has_accents(name: str) -> bool:
     """
-    Verifica si el nombre contiene caracteres acentuados.
+    Check whether the name contains accented characters.
 
     Args:
-        name: Nombre a verificar
+        name: Name to check
 
     Returns:
-        True si tiene acentos
+        True if it has accents
     """
     return bool(re.search(r'[áéíóúñüÁÉÍÓÚÑÜ]', name))
 
 
 def score_name_quality(name: str, frequency: int = 1) -> Tuple[int, int, int, int]:
     """
-    Calcula una puntuación de calidad para un nombre.
+    Compute a quality score for a name.
 
-    Se usa para seleccionar el mejor nombre entre variantes.
+    Used to pick the best name among variants.
 
-    Criterios (en orden de prioridad):
-    1. Tiene nombre completo (no solo iniciales)
-    2. Tiene acentos
-    3. Frecuencia de aparición
-    4. Longitud del nombre
+    Criteria (in priority order):
+    1. Has a full name (not just initials)
+    2. Has accents
+    3. Frequency of appearance
+    4. Name length
 
     Args:
-        name: Nombre a evaluar
-        frequency: Número de veces que aparece este nombre
+        name: Name to evaluate
+        frequency: Number of times this name appears
 
     Returns:
-        Tupla de puntuaciones para ordenación
+        Tuple of scores for sorting
     """
     return (
         1 if has_full_name(name) else 0,
@@ -234,20 +234,20 @@ def score_name_quality(name: str, frequency: int = 1) -> Tuple[int, int, int, in
 def select_display_name(name_variants: List[str],
                          name_counts: Optional[Dict[str, int]] = None) -> str:
     """
-    Selecciona el mejor nombre para mostrar entre las variantes.
+    Select the best name to display among the variants.
 
-    Criterios de selección:
-    1. Priorizar nombres completos sobre iniciales
-    2. Priorizar nombres con acentos
-    3. Si hay empate, usar el más frecuente
-    4. Si aún hay empate, usar el más largo
+    Selection criteria:
+    1. Prefer full names over initials
+    2. Prefer names with accents
+    3. On tie, use the most frequent one
+    4. If still tied, use the longest one
 
     Args:
-        name_variants: Lista de variantes del nombre
-        name_counts: Diccionario con frecuencias de cada variante
+        name_variants: List of name variants
+        name_counts: Dictionary with the frequencies of each variant
 
     Returns:
-        El nombre más apropiado para mostrar
+        The most appropriate name to display
 
     Examples:
         >>> select_display_name(['García, J', 'García, Juan', 'Garcia, Juan'])
@@ -270,27 +270,27 @@ def select_display_name(name_variants: List[str],
 
 def are_names_similar(name1: str, name2: str) -> bool:
     """
-    Verifica si dos nombres son similares (podrían ser la misma persona).
+    Check whether two names are similar (could be the same person).
 
     Args:
-        name1: Primer nombre
-        name2: Segundo nombre
+        name1: First name
+        name2: Second name
 
     Returns:
-        True si los nombres normalizados son iguales
+        True if the normalized names are equal
     """
     return get_canonical_name(name1) == get_canonical_name(name2)
 
 
 def extract_surname(name: str) -> str:
     """
-    Extrae el apellido de un nombre en formato "Apellido, Nombre".
+    Extract the surname from a name in "Lastname, Forename" format.
 
     Args:
-        name: Nombre completo
+        name: Full name
 
     Returns:
-        Apellido
+        Surname
     """
     if ',' in name:
         return name.split(',')[0].strip()
@@ -299,13 +299,13 @@ def extract_surname(name: str) -> str:
 
 def extract_first_name(name: str) -> str:
     """
-    Extrae el nombre de pila de un nombre en formato "Apellido, Nombre".
+    Extract the given name from a name in "Lastname, Forename" format.
 
     Args:
-        name: Nombre completo
+        name: Full name
 
     Returns:
-        Nombre de pila
+        Given name
     """
     if ',' in name:
         parts = name.split(',', 1)
@@ -319,7 +319,7 @@ def extract_first_name(name: str) -> str:
 # =============================================================================
 
 if __name__ == '__main__':
-    # Tests básicos
+    # Basic tests
     test_cases = [
         ("García-Pavia, Pablo", "garcia pavia, pablo"),
         ("García Pavía, Pablo", "garcia pavia, pablo"),
@@ -331,7 +331,7 @@ if __name__ == '__main__':
         ("González, J. A.", "gonzalez, j a"),
     ]
 
-    print("=== Tests de normalización ===\n")
+    print("=== Normalization tests ===\n")
     all_passed = True
     for original, expected in test_cases:
         result = get_canonical_name(original)
@@ -341,17 +341,17 @@ if __name__ == '__main__':
         print(f"{status} '{original}'")
         print(f"  → '{result}'")
         if result != expected:
-            print(f"  ✗ Esperado: '{expected}'")
+            print(f"  ✗ Expected: '{expected}'")
         print()
 
     print("=" * 40)
-    print(f"Resultado: {'TODOS PASARON' if all_passed else 'HAY ERRORES'}")
+    print(f"Result: {'ALL PASSED' if all_passed else 'ERRORS FOUND'}")
 
-    # Test de selección de nombre
-    print("\n=== Tests de selección de nombre ===\n")
+    # Name selection test
+    print("\n=== Name selection tests ===\n")
     variants = ['García, J', 'García, Juan', 'Garcia, Juan', 'García, J A']
     counts = {'García, J': 10, 'García, Juan': 5, 'Garcia, Juan': 3, 'García, J A': 2}
     selected = select_display_name(variants, counts)
-    print(f"Variantes: {variants}")
-    print(f"Frecuencias: {counts}")
-    print(f"Seleccionado: {selected}")
+    print(f"Variants: {variants}")
+    print(f"Frequencies: {counts}")
+    print(f"Selected: {selected}")

@@ -1,11 +1,11 @@
 """
-Cliente de PubMed.
+PubMed client.
 
-Wrapper simplificado que usa PubMedBatchDownloader internamente.
-Proporciona una interfaz limpia para operaciones comunes.
+Simplified wrapper that uses PubMedBatchDownloader internally.
+Provides a clean interface for common operations.
 
-NOTA: Para descargas grandes o con rate limiting avanzado,
-usar PubMedBatchDownloader directamente.
+NOTE: For large downloads or advanced rate limiting,
+use PubMedBatchDownloader directly.
 """
 
 from typing import Any, Dict, List, Optional
@@ -20,15 +20,15 @@ from src.download.batch_downloader import PubMedBatchDownloader
 
 class PubMedClient:
     """
-    Cliente simplificado para la API de PubMed (NCBI Entrez).
+    Simplified client for the PubMed (NCBI Entrez) API.
 
-    Usa PubMedBatchDownloader internamente para:
-    - Rate limiting automático
-    - Reintentos con backoff
-    - Manejo de errores HTTP
+    Uses PubMedBatchDownloader internally for:
+    - Automatic rate limiting
+    - Retries with backoff
+    - HTTP error handling
 
-    Para operaciones avanzadas o descargas masivas,
-    usar PubMedBatchDownloader directamente.
+    For advanced operations or massive downloads,
+    use PubMedBatchDownloader directly.
     """
 
     def __init__(
@@ -37,11 +37,11 @@ class PubMedClient:
         api_key: Optional[str] = None
     ):
         """
-        Inicializa el cliente de PubMed.
+        Initialize the PubMed client.
 
         Args:
-            email: Email requerido por NCBI (usa config si no se proporciona)
-            api_key: API Key opcional para mayor rate limit
+            email: Email required by NCBI (uses config if not provided)
+            api_key: Optional API Key for a higher rate limit
         """
         download_config = settings.pubmed.get('download', {})
 
@@ -50,11 +50,11 @@ class PubMedClient:
 
         if not self.email:
             raise ValueError(
-                "Email requerido por NCBI. "
-                "Configúralo en config/pubmed_config.yaml"
+                "Email required by NCBI. "
+                "Configure it in config/pubmed_config.yaml"
             )
 
-        # Usar batch_downloader internamente
+        # Use batch_downloader internally
         rate_config = settings.pubmed.get('rate_limiting', {})
         self._downloader = PubMedBatchDownloader(
             email=self.email,
@@ -70,27 +70,27 @@ class PubMedClient:
         retstart: int = 0
     ) -> List[int]:
         """
-        Busca PMIDs que coinciden con una query.
+        Search PMIDs matching a query.
 
         Args:
-            query: Query de búsqueda de PubMed
-            retmax: Máximo de resultados a retornar
-            retstart: Offset de inicio
+            query: PubMed search query
+            retmax: Maximum results to return
+            retstart: Starting offset
 
         Returns:
-            Lista de PMIDs encontrados
+            List of PMIDs found
         """
         return self._downloader.search_pmids(query, retmax=retmax, retstart=retstart)
 
     def get_count(self, query: str) -> int:
         """
-        Obtiene el número total de resultados para una query.
+        Get the total number of results for a query.
 
         Args:
-            query: Query de búsqueda
+            query: Search query
 
         Returns:
-            Número total de artículos
+            Total number of articles
         """
         return self._downloader.get_total_count(query)
 
@@ -101,27 +101,27 @@ class PubMedClient:
         retmode: str = "xml"
     ) -> Optional[Dict[str, Any]]:
         """
-        Descarga artículos por sus PMIDs.
+        Download articles by their PMIDs.
 
         Args:
-            pmids: Lista de PMIDs a descargar
-            rettype: Tipo de retorno (xml, medline, etc.)
-            retmode: Modo de retorno
+            pmids: List of PMIDs to download
+            rettype: Return type (xml, medline, etc.)
+            retmode: Return mode
 
         Returns:
-            Registros descargados o None si falla
+            Downloaded records or None if it fails
         """
         return self._downloader.fetch_batch(pmids, rettype=rettype, retmode=retmode)
 
     def fetch_single(self, pmid: int) -> Optional[Dict[str, Any]]:
         """
-        Descarga un solo artículo.
+        Download a single article.
 
         Args:
-            pmid: PMID del artículo
+            pmid: PMID of the article
 
         Returns:
-            Datos del artículo o None
+            Article data or None
         """
         return self._downloader.fetch_single(pmid)
 
@@ -134,19 +134,19 @@ class PubMedClient:
         date_to: Optional[str] = None,
     ) -> List[int]:
         """
-        Busca TODOS los PMIDs que coinciden con una query.
+        Search ALL PMIDs matching a query.
 
-        Usa paginación automática y división por períodos si excede límite de 9999.
+        Uses automatic pagination and splits by periods if the 9999 limit is exceeded.
 
         Args:
-            query: Query de búsqueda
-            batch_size: Tamaño de cada página (max 9,999 por límite de PubMed)
-            max_results: Máximo de resultados (None = sin límite)
-            date_from: Fecha inicio formato YYYY/MM/DD
-            date_to: Fecha fin formato YYYY/MM/DD
+            query: Search query
+            batch_size: Size of each page (max 9,999 due to PubMed limit)
+            max_results: Maximum results (None = no limit)
+            date_from: Start date in YYYY/MM/DD format
+            date_to: End date in YYYY/MM/DD format
 
         Returns:
-            Lista completa de PMIDs
+            Complete list of PMIDs
         """
         return self._downloader.search_all_pmids(
             query,

@@ -1,8 +1,8 @@
 """
-Servicio de artículos.
+Article service.
 
-Orquesta el guardado completo de un artículo con sus autores.
-Esquema simplificado: 2 tablas (articles + article_authors).
+Orchestrates the complete saving of an article with its authors.
+Simplified schema: 2 tables (articles + article_authors).
 """
 
 from typing import Any, Dict, Optional
@@ -28,12 +28,12 @@ from src.database.repositories.article_author_repo import ArticleAuthorRepositor
 
 class ArticleService:
     """
-    Servicio que orquesta el guardado completo de artículos.
+    Service that orchestrates the complete saving of articles.
 
-    Flujo simplificado:
-    1. Extraer campos del XML de PubMed
-    2. Guardar artículo en BD
-    3. Filtrar y guardar autores españoles
+    Simplified flow:
+    1. Extract fields from PubMed XML
+    2. Save article to DB
+    3. Filter and save Spanish authors
     """
 
     @classmethod
@@ -43,35 +43,35 @@ class ArticleService:
         article_data: Dict[str, Any]
     ) -> Optional[int]:
         """
-        Procesa un artículo de PubMed y lo guarda en la BD.
+        Process a PubMed article and save it to the DB.
 
         Args:
-            cur: Cursor de base de datos
-            article_data: Datos del artículo de Entrez
+            cur: Database cursor
+            article_data: Entrez article data
 
         Returns:
-            pubmed_id del artículo guardado o None si falla
+            pubmed_id of the saved article or None if it fails
         """
         try:
-            # 1. Extraer datos del artículo
+            # 1. Extract article data
             article = cls._extract_article(article_data)
 
-            # 2. Guardar artículo
+            # 2. Save article
             pubmed_id = ArticleRepository.insert_or_update(cur, article)
 
-            # 3. Procesar y guardar autores españoles
+            # 3. Process and save Spanish authors
             cls._process_authors(cur, article_data, pubmed_id)
 
             return pubmed_id
 
         except Exception as e:
             raise Exception(
-                f"Error procesando artículo: {e}"
+                f"Error processing article: {e}"
             ) from e
 
     @classmethod
     def _extract_article(cls, article_data: Dict[str, Any]) -> Article:
-        """Extrae todos los campos del artículo."""
+        """Extract all fields of the article."""
         return Article(
             pubmed_id=ArticleExtractor.extract_pubmed_id(article_data),
             article_title=ArticleExtractor.extract_article_title(article_data),
@@ -93,10 +93,10 @@ class ArticleService:
         pubmed_id: int
     ) -> int:
         """
-        Procesa y guarda los autores con afiliación española.
+        Process and save authors with Spanish affiliation.
 
         Returns:
-            Número de autores españoles guardados
+            Number of Spanish authors saved
         """
         article = article_data['MedlineCitation']['Article']
         author_list = article.get('AuthorList', [])
@@ -104,27 +104,27 @@ class ArticleService:
         spanish_authors_count = 0
 
         for position, author_data in enumerate(author_list, start=1):
-            # Saltar si no tiene apellido
+            # Skip if it has no last name
             if 'LastName' not in author_data:
                 continue
 
-            # Extraer afiliación como texto
+            # Extract affiliation as text
             affiliation_text = AffiliationExtractor.extract_affiliation_text(
                 author_data
             )
 
-            # Filtrar por España
+            # Filter by Spain
             spanish_text = None
             if affiliation_text:
                 spanish_text = spanish_filter.filter_spanish_parts(affiliation_text)
 
-            # Si no hay afiliación española, saltar
+            # If there is no Spanish affiliation, skip
             if not spanish_text:
                 continue
 
             spanish_authors_count += 1
 
-            # Crear objeto Author con todos los campos
+            # Build Author object with all fields
             author = Author(
                 author_lastname=author_data.get('LastName', ''),
                 author_forename=author_data.get('ForeName', ''),
@@ -134,7 +134,7 @@ class ArticleService:
                 affiliation=spanish_text,
             )
 
-            # Guardar autor
+            # Save author
             ArticleAuthorRepository.insert(cur, pubmed_id, author)
 
         return spanish_authors_count
@@ -142,10 +142,10 @@ class ArticleService:
     @staticmethod
     def get_article_stats(cur: cursor) -> Dict[str, int]:
         """
-        Obtiene estadísticas de artículos en la BD.
+        Get article statistics from the DB.
 
         Returns:
-            Dict con conteos de artículos y autores españoles
+            Dict with counts of articles and Spanish authors
         """
         return {
             'total_articles': ArticleRepository.count(cur),

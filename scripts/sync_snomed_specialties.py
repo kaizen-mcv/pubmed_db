@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
-"""
-Script para sincronizar especialidades SNOMED CT desde API FHIR.
+"""Script to synchronize SNOMED CT specialties from the FHIR API.
 
-Uso:
-    python sync_snomed_specialties.py           # Solo reportar diferencias
-    python sync_snomed_specialties.py --apply   # Aplicar cambios a BD
+Usage:
+    python sync_snomed_specialties.py           # Report differences only
+    python sync_snomed_specialties.py --apply   # Apply changes to the DB
 
-Fuente: HL7 FHIR ValueSet c80-practice-codes
+Source: HL7 FHIR ValueSet c80-practice-codes
 https://www.hl7.org/fhir/valueset-c80-practice-codes.html
 """
 
@@ -18,14 +17,14 @@ from typing import Dict, List, Set, Tuple
 
 import requests
 
-# Añadir path del proyecto
+# Add project path
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.database.connection import db
 
 
-# URL de la API FHIR para especialidades médicas
+# FHIR API URL for medical specialties
 FHIR_VALUESET_URL = (
     "https://tx.fhir.org/r4/ValueSet/$expand"
     "?url=http://hl7.org/fhir/ValueSet/c80-practice-codes"
@@ -33,11 +32,10 @@ FHIR_VALUESET_URL = (
 
 
 def fetch_fhir_specialties() -> Dict[str, str]:
-    """
-    Obtiene las especialidades desde la API FHIR.
+    """Fetches specialties from the FHIR API.
 
     Returns:
-        Dict[snomed_code, name_en]
+        Dict[snomed_code, name_en].
     """
     print("Consultando API FHIR...")
 
@@ -49,7 +47,7 @@ def fetch_fhir_specialties() -> Dict[str, str]:
 
         specialties = {}
 
-        # Extraer códigos del ValueSet expandido
+        # Extract codes from the expanded ValueSet
         if 'expansion' in data and 'contains' in data['expansion']:
             for item in data['expansion']['contains']:
                 code = item.get('code')
@@ -66,11 +64,10 @@ def fetch_fhir_specialties() -> Dict[str, str]:
 
 
 def fetch_local_specialties() -> Dict[str, Tuple[str, str, str, bool]]:
-    """
-    Obtiene las especialidades desde la BD local.
+    """Fetches specialties from the local DB.
 
     Returns:
-        Dict[snomed_code, (name_en, name_snomed, name_es, is_mir_spain)]
+        Dict[snomed_code, (name_en, name_snomed, name_es, is_mir_spain)].
     """
     print("Consultando BD local...")
 
@@ -93,37 +90,36 @@ def compare_specialties(
     fhir: Dict[str, str],
     local: Dict[str, Tuple[str, str, str, bool]]
 ) -> Tuple[List, List, List, List]:
-    """
-    Compara especialidades FHIR con locales.
+    """Compares FHIR specialties with local ones.
 
     Returns:
-        (nuevas, eliminadas, modificadas_name_en, sin_name_snomed)
+        (new, removed, modified_name_en, missing_name_snomed).
     """
     fhir_codes = set(fhir.keys())
     local_codes = set(local.keys())
 
-    # Nuevas en FHIR (no están en local)
+    # New in FHIR (not in local)
     new_codes = fhir_codes - local_codes
     nuevas = [(code, fhir[code]) for code in sorted(new_codes)]
 
-    # Eliminadas de FHIR (están en local pero no en FHIR)
+    # Removed from FHIR (in local but not in FHIR)
     removed_codes = local_codes - fhir_codes
     eliminadas = [(code, local[code][0]) for code in sorted(removed_codes)]
 
-    # Detectar las que no tienen name_snomed poblado
-    # NO modificamos name_en - ese es nuestro nombre simplificado
+    # Detect those that do not have name_snomed populated
+    # We do NOT modify name_en - that is our simplified name
     common_codes = fhir_codes & local_codes
-    modificadas = []  # Solo si hay cambios reales futuros en el estándar
+    modificadas = []  # Only if there are real future changes in the standard
     sin_name_snomed = []
 
     for code in sorted(common_codes):
         fhir_name = fhir[code]
         name_en, name_snomed, name_es, is_mir = local[code]
 
-        # Si no tiene name_snomed, añadir a la lista para poblar
+        # If it does not have name_snomed, add to the list to populate
         if name_snomed is None:
             sin_name_snomed.append((code, fhir_name))
-        # Si tiene name_snomed pero difiere del FHIR actual (cambio en estándar)
+        # If it has name_snomed but differs from the current FHIR (change in standard)
         elif name_snomed != fhir_name:
             modificadas.append((code, name_snomed, fhir_name))
 
@@ -138,7 +134,7 @@ def print_report(
     fhir_count: int,
     local_count: int
 ):
-    """Imprime el reporte de diferencias."""
+    """Prints the differences report."""
     print("\n" + "=" * 70)
     print("REPORTE DE SINCRONIZACIÓN SNOMED CT")
     print("=" * 70)
@@ -174,7 +170,7 @@ def print_report(
     if sin_name_snomed:
         print(f"\n SIN NAME_SNOMED (se poblará) ({len(sin_name_snomed)}):")
         print("-" * 50)
-        for code, name in sin_name_snomed[:10]:  # Solo mostrar primeros 10
+        for code, name in sin_name_snomed[:10]:  # Show only the first 10
             print(f"  {code}: {name}")
         if len(sin_name_snomed) > 10:
             print(f"  ... y {len(sin_name_snomed) - 10} más")
@@ -192,13 +188,13 @@ def apply_changes(
     modificadas: List,
     sin_name_snomed: List
 ):
-    """Aplica los cambios a la BD."""
+    """Applies the changes to the DB."""
     print("\nAplicando cambios a la BD...")
 
     with db.transaction() as cur:
-        # Insertar nuevas (con name_snomed = nombre oficial FHIR)
+        # Insert new ones (with name_snomed = official FHIR name)
         for code, name in nuevas:
-            # Simplificar nombre (quitar "(qualifier value)" etc.)
+            # Simplify name (remove "(qualifier value)", etc.)
             simple_name = simplify_snomed_name(name)
             cur.execute("""
                 INSERT INTO snomed_specialties (snomed_code, name_en, name_snomed, is_mir_spain, last_checked)
@@ -206,7 +202,7 @@ def apply_changes(
             """, (code, simple_name, name, date.today()))
             print(f"  + Insertada: {code} - {simple_name}")
 
-        # Actualizar modificadas
+        # Update modified ones
         for code, old_name, new_name in modificadas:
             cur.execute("""
                 UPDATE snomed_specialties
@@ -215,7 +211,7 @@ def apply_changes(
             """, (new_name, date.today(), code))
             print(f"  ~ Actualizada: {code} - {new_name}")
 
-        # Poblar name_snomed donde falta
+        # Populate name_snomed where missing
         for code, fhir_name in sin_name_snomed:
             cur.execute("""
                 UPDATE snomed_specialties
@@ -226,7 +222,7 @@ def apply_changes(
         if sin_name_snomed:
             print(f" Poblado name_snomed para {len(sin_name_snomed)} especialidades")
 
-        # Actualizar fecha de comprobación para todas
+        # Update last_checked date for all
         cur.execute("""
             UPDATE snomed_specialties
             SET last_checked = %s
@@ -240,16 +236,15 @@ def apply_changes(
 
 
 def simplify_snomed_name(name: str) -> str:
-    """
-    Simplifica el nombre oficial SNOMED quitando sufijos como "(qualifier value)".
+    """Simplifies the official SNOMED name by removing suffixes such as "(qualifier value)".
 
     Args:
-        name: Nombre oficial SNOMED
+        name: Official SNOMED name.
 
     Returns:
-        Nombre simplificado
+        Simplified name.
     """
-    # Quitar "(qualifier value)" y similares
+    # Remove "(qualifier value)" and similar
     import re
     simplified = re.sub(r'\s*\([^)]*\)\s*$', '', name)
     return simplified.strip()
@@ -257,32 +252,32 @@ def simplify_snomed_name(name: str) -> str:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Sincroniza especialidades SNOMED CT desde API FHIR"
+        description="Synchronize SNOMED CT specialties from the FHIR API"
     )
     parser.add_argument(
         "--apply",
         action="store_true",
-        help="Aplicar cambios a la BD (por defecto solo reporta)"
+        help="Apply changes to the DB (by default only reports)"
     )
 
     args = parser.parse_args()
 
-    # Obtener datos
+    # Fetch data
     fhir_specialties = fetch_fhir_specialties()
     local_specialties = fetch_local_specialties()
 
-    # Comparar
+    # Compare
     nuevas, eliminadas, modificadas, sin_name_snomed = compare_specialties(
         fhir_specialties, local_specialties
     )
 
-    # Reportar
+    # Report
     print_report(
         nuevas, eliminadas, modificadas, sin_name_snomed,
         len(fhir_specialties), len(local_specialties)
     )
 
-    # Aplicar si se pidió
+    # Apply if requested
     if args.apply and (nuevas or modificadas or sin_name_snomed):
         apply_changes(nuevas, modificadas, sin_name_snomed)
     elif args.apply:

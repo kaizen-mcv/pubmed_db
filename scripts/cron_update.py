@@ -1,24 +1,23 @@
 #!/usr/bin/env python3
-"""
-Script para CRON - Actualización incremental de PubMed.
+"""CRON script for incremental PubMed updates.
 
-Ejecutar diariamente (recomendado: horas off-peak de NCBI):
+Run daily (recommended: NCBI off-peak hours):
     0 3 * * * cd $PROJECT_DIR && ./venv/bin/python scripts/cron_update.py >> data/logs/cron.log 2>&1
 
-Este script:
-1. Descarga artículos nuevos desde la última ejecución (--incremental)
-2. Actualiza la tabla de especialidades de autores para autores nuevos
-3. Genera un resumen de la ejecución
+This script:
+1. Downloads new articles since the last run (--incremental).
+2. Updates the author specialties table for new authors.
+3. Generates an execution summary.
 
-Requisitos:
-    - Variables de entorno: PUBMED_DB_PASSWORD
-    - Configuración: config/pubmed_config.yaml con email
+Requirements:
+    - Environment variables: PUBMED_DB_PASSWORD
+    - Configuration: config/pubmed_config.yaml with email
 
-Uso:
-    python scripts/cron_update.py                    # Actualización completa
-    python scripts/cron_update.py --download-only   # Solo descargar artículos
-    python scripts/cron_update.py --specialties-only # Solo actualizar especialidades
-    python scripts/cron_update.py --dry-run          # Mostrar qué se haría
+Usage:
+    python scripts/cron_update.py                    # Full update
+    python scripts/cron_update.py --download-only    # Only download articles
+    python scripts/cron_update.py --specialties-only # Only update specialties
+    python scripts/cron_update.py --dry-run          # Show what would be done
 """
 
 import argparse
@@ -28,7 +27,7 @@ import subprocess
 from pathlib import Path
 from datetime import datetime
 
-# Añadir el directorio raíz al path
+# Add the root directory to the path
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
@@ -36,13 +35,13 @@ from src.database.connection import db
 
 
 def log(message):
-    """Log con timestamp."""
+    """Log with timestamp."""
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     print(f"[{timestamp}] {message}")
 
 
 def run_command(cmd, description, dry_run=False):
-    """Ejecuta un comando y retorna si fue exitoso."""
+    """Runs a command and returns whether it succeeded."""
     log(f">>> {description}")
 
     if dry_run:
@@ -55,12 +54,12 @@ def run_command(cmd, description, dry_run=False):
             cwd=str(PROJECT_ROOT),
             capture_output=True,
             text=True,
-            timeout=3600  # 1 hora máximo
+            timeout=3600  # 1 hour maximum
         )
 
         if result.returncode == 0:
             log(f"  ✓ Completado")
-            # Mostrar últimas líneas del output
+            # Show the last lines of the output
             if result.stdout:
                 for line in result.stdout.strip().split('\n')[-5:]:
                     if line.strip():
@@ -82,7 +81,7 @@ def run_command(cmd, description, dry_run=False):
 
 
 def get_stats_before():
-    """Obtiene estadísticas antes de la actualización."""
+    """Gets statistics before the update."""
     stats = {}
     try:
         with db.cursor_context() as cur:
@@ -102,7 +101,7 @@ def get_stats_before():
 
 
 def get_stats_after(stats_before):
-    """Obtiene estadísticas después y calcula diferencias."""
+    """Gets statistics after the update and computes differences."""
     stats_after = get_stats_before()
 
     diff = {
@@ -119,22 +118,22 @@ def get_stats_after(stats_before):
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Actualización incremental de PubMed para CRON'
+        description='Incremental PubMed update for CRON'
     )
     parser.add_argument(
         '--download-only',
         action='store_true',
-        help='Solo descargar artículos nuevos'
+        help='Only download new articles'
     )
     parser.add_argument(
         '--specialties-only',
         action='store_true',
-        help='Solo actualizar especialidades de autores'
+        help='Only update author specialties'
     )
     parser.add_argument(
         '--dry-run',
         action='store_true',
-        help='Mostrar qué se haría sin ejecutar'
+        help='Show what would be done without executing'
     )
     args = parser.parse_args()
 
@@ -143,12 +142,12 @@ def main():
     log("CRON UPDATE - PubMed España")
     log("=" * 60)
 
-    # Verificar variables de entorno
+    # Verify environment variables
     if not os.environ.get('PUBMED_DB_PASSWORD'):
         log("ERROR: Variable PUBMED_DB_PASSWORD no definida")
         sys.exit(1)
 
-    # Estadísticas antes
+    # Stats before
     log("\n[Estadísticas iniciales]")
     stats_before = get_stats_before()
     log(f"  Artículos: {stats_before['articles']:,}")
@@ -158,7 +157,7 @@ def main():
     success = True
     python_cmd = str(PROJECT_ROOT / 'venv' / 'bin' / 'python')
 
-    # Paso 1: Descargar artículos nuevos
+    # Step 1: Download new articles
     if not args.specialties_only:
         log("\n[Paso 1/2] Descargando artículos nuevos")
         cmd = [python_cmd, 'scripts/download_pubmed.py', '--incremental']
@@ -166,7 +165,7 @@ def main():
             log("  WARNING: La descarga tuvo problemas, continuando...")
             success = False
 
-    # Paso 2: Actualizar especialidades de autores nuevos
+    # Step 2: Update specialties for new authors
     if not args.download_only:
         log("\n[Paso 2/2] Actualizando especialidades de autores")
         cmd = [python_cmd, 'scripts/populate_author_specialties.py', '--incremental']
@@ -174,7 +173,7 @@ def main():
             log("  WARNING: La actualización de especialidades tuvo problemas")
             success = False
 
-    # Estadísticas después
+    # Stats after
     if not args.dry_run:
         log("\n[Resumen de cambios]")
         diff = get_stats_after(stats_before)

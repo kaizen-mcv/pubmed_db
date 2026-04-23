@@ -1,4 +1,4 @@
-"""Utilidades del proyecto PubMed."""
+"""Utilities for the PubMed project."""
 
 from src.utils.logger import get_logger, setup_logging, logger
 

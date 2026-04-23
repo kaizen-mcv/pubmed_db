@@ -1,57 +1,57 @@
 -- ============================================================================
--- Tabla de especialidades inferidas por autor
--- Almacena las especialidades médicas detectadas para cada autor único
--- Schema: sm_result (resultados finales)
+-- Inferred specialties table per author
+-- Stores the medical specialties detected for each unique author
+-- Schema: sm_result (final results)
 --
--- NOTA: Las especialidades se infieren únicamente desde las afiliaciones
--- de los autores, que es el único campo 100% fiable para determinar
--- la especialidad de cada autor individual.
+-- NOTE: Specialties are inferred only from author affiliations, which
+-- is the only 100% reliable field for determining the specialty of each
+-- individual author.
 -- ============================================================================
 
--- Crear schema si no existe
+-- Create schema if it does not exist
 CREATE SCHEMA IF NOT EXISTS sm_result;
 
--- Eliminar tabla existente
+-- Drop existing table
 DROP TABLE IF EXISTS sm_result.author_specialties CASCADE;
 
--- Crear tabla author_specialties
+-- Create author_specialties table
 CREATE TABLE sm_result.author_specialties (
     sm_author_specialty_id SERIAL PRIMARY KEY,
-    author_name VARCHAR(500) NOT NULL,          -- Nombre del autor (formato "Apellido, Nombre")
-    author_orcid VARCHAR(50),                   -- ORCID si está disponible
+    author_name VARCHAR(500) NOT NULL,          -- Author name (format "Lastname, Firstname")
+    author_orcid VARCHAR(50),                   -- ORCID if available
     snomed_code VARCHAR(20) NOT NULL REFERENCES vocab.snomed_specialties(snomed_code),
-    confidence DECIMAL(4,3),                    -- Confianza del mapeo (0.000-1.000)
-    article_count INTEGER DEFAULT 1,            -- Número de artículos que contribuyen a esta especialidad
+    confidence DECIMAL(4,3),                    -- Mapping confidence (0.000-1.000)
+    article_count INTEGER DEFAULT 1,            -- Number of articles contributing to this specialty
     last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-    -- Un autor puede tener múltiples especialidades, pero cada combinación es única
+    -- An author can have multiple specialties, but each combination is unique
     UNIQUE(author_name, snomed_code)
 );
 
--- Índices para búsquedas eficientes
+-- Indexes for efficient lookups
 CREATE INDEX idx_author_specialties_name ON sm_result.author_specialties(author_name);
 CREATE INDEX idx_author_specialties_orcid ON sm_result.author_specialties(author_orcid) WHERE author_orcid IS NOT NULL;
 CREATE INDEX idx_author_specialties_snomed ON sm_result.author_specialties(snomed_code);
 CREATE INDEX idx_author_specialties_confidence ON sm_result.author_specialties(confidence DESC);
 
--- Índice para búsquedas por nombre (LIKE)
+-- Index for name search (LIKE)
 CREATE INDEX idx_author_specialties_name_pattern ON sm_result.author_specialties(author_name varchar_pattern_ops);
 
 -- ============================================================================
--- Comentarios de documentación
+-- Documentation comments
 -- ============================================================================
 
-COMMENT ON SCHEMA sm_result IS 'Resultados finales de inferencia de especialidades';
-COMMENT ON TABLE sm_result.author_specialties IS 'Especialidades médicas inferidas para cada autor único basándose en sus afiliaciones';
-COMMENT ON COLUMN sm_result.author_specialties.author_name IS 'Nombre del autor en formato "Apellido, Nombre"';
-COMMENT ON COLUMN sm_result.author_specialties.author_orcid IS 'ORCID del autor si está disponible (permite desambiguación)';
-COMMENT ON COLUMN sm_result.author_specialties.snomed_code IS 'Código SNOMED CT de la especialidad inferida';
-COMMENT ON COLUMN sm_result.author_specialties.confidence IS 'Confianza del mapeo (1.0=nombre SNOMED oficial, 0.9=nombre simplificado)';
-COMMENT ON COLUMN sm_result.author_specialties.article_count IS 'Número de artículos del autor que contribuyen a esta especialidad';
-COMMENT ON COLUMN sm_result.author_specialties.last_updated IS 'Última actualización de esta inferencia';
+COMMENT ON SCHEMA sm_result IS 'Final results of specialty inference';
+COMMENT ON TABLE sm_result.author_specialties IS 'Medical specialties inferred for each unique author based on their affiliations';
+COMMENT ON COLUMN sm_result.author_specialties.author_name IS 'Author name in "Lastname, Firstname" format';
+COMMENT ON COLUMN sm_result.author_specialties.author_orcid IS 'Author ORCID if available (enables disambiguation)';
+COMMENT ON COLUMN sm_result.author_specialties.snomed_code IS 'SNOMED CT code of the inferred specialty';
+COMMENT ON COLUMN sm_result.author_specialties.confidence IS 'Mapping confidence (1.0=official SNOMED name, 0.9=simplified name)';
+COMMENT ON COLUMN sm_result.author_specialties.article_count IS 'Number of author articles contributing to this specialty';
+COMMENT ON COLUMN sm_result.author_specialties.last_updated IS 'Last update of this inference';
 
 -- ============================================================================
--- Vista para consultas rápidas
+-- View for quick queries
 -- ============================================================================
 
 CREATE OR REPLACE VIEW sm_result.v_author_specialties_detail AS
@@ -68,10 +68,10 @@ FROM sm_result.author_specialties asp
 JOIN vocab.snomed_specialties ss ON asp.snomed_code = ss.snomed_code
 ORDER BY asp.author_name, asp.confidence DESC;
 
-COMMENT ON VIEW sm_result.v_author_specialties_detail IS 'Vista con detalles completos de especialidades por autor';
+COMMENT ON VIEW sm_result.v_author_specialties_detail IS 'View with full specialty details per author';
 
 -- ============================================================================
--- Función para obtener especialidades de un autor
+-- Function to get specialties for an author
 -- ============================================================================
 
 DROP FUNCTION IF EXISTS get_author_specialties(VARCHAR);
@@ -99,29 +99,29 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-COMMENT ON FUNCTION get_author_specialties IS 'Obtiene las especialidades de un autor por su nombre';
+COMMENT ON FUNCTION get_author_specialties IS 'Returns the specialties of an author by name';
 
 -- ============================================================================
--- Consultas SQL útiles
+-- Useful SQL queries
 -- ============================================================================
 
--- Top autores por especialidad
+-- Top authors by specialty
 -- SELECT author_name, confidence, article_count
 -- FROM sm_result.author_specialties
--- WHERE snomed_code = '394579002'  -- Cardiología
+-- WHERE snomed_code = '394579002'  -- Cardiology
 -- ORDER BY confidence DESC, article_count DESC
 -- LIMIT 20;
 
--- Distribución de especialidades
--- SELECT s.name_en, COUNT(*) as autores, AVG(a.confidence) as confianza_media
+-- Specialty distribution
+-- SELECT s.name_en, COUNT(*) as authors, AVG(a.confidence) as avg_confidence
 -- FROM sm_result.author_specialties a
 -- JOIN vocab.snomed_specialties s ON a.snomed_code = s.snomed_code
 -- GROUP BY s.snomed_code, s.name_en
--- ORDER BY autores DESC;
+-- ORDER BY authors DESC;
 
--- Autores con múltiples especialidades
--- SELECT author_name, COUNT(*) as num_especialidades
+-- Authors with multiple specialties
+-- SELECT author_name, COUNT(*) as num_specialties
 -- FROM sm_result.author_specialties
 -- GROUP BY author_name
 -- HAVING COUNT(*) > 1
--- ORDER BY num_especialidades DESC;
+-- ORDER BY num_specialties DESC;

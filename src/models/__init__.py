@@ -1,4 +1,4 @@
-# Modelos de datos (Dataclasses)
+# Data models (dataclasses)
 from .article import Article
 from .author import Author
 

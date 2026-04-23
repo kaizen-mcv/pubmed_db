@@ -1,7 +1,7 @@
-# (VL) Configuración de filtrado geográfico para afiliaciones españolas
-# Este archivo contiene la lógica local para identificar autores españoles
+# Geographic filtering rules for Spanish author affiliations.
+# This file drives the local logic that identifies Spanish authors.
 
-# Marcadores que indican afiliación española (obligatorio al menos uno)
+# Markers that indicate a Spanish affiliation (at least one required).
 spanish_markers:
   - spain
   - españa
@@ -9,9 +9,9 @@ spanish_markers:
   - español
   - espana
 
-# Ciudades españolas (usadas como refuerzo, no suficientes por sí solas)
+# Spanish cities (supporting evidence, not sufficient on their own).
 spanish_cities:
-  # Capitales de provincia
+  # Provincial capitals
   - madrid
   - barcelona
   - valencia
@@ -107,9 +107,9 @@ spanish_cities:
   - reus
   - manresa
 
-# Países extranjeros (lista negra - si aparecen, se excluye la afiliación)
+# Foreign countries (denylist — affiliation is rejected if any appears).
 foreign_countries:
-  # Europa
+  # Europe
   - france
   - francia
   - lyon
@@ -199,7 +199,7 @@ foreign_countries:
   - eslovaquia
   - bulgaria
 
-  # América del Norte
+  # North America
   - usa
   - united states
   - estados unidos
@@ -222,7 +222,7 @@ foreign_countries:
   - montreal
   - vancouver
 
-  # América Latina
+  # Latin America
   - mexico
   - méxico
   - monterrey
@@ -288,7 +288,7 @@ foreign_countries:
   - philippines
   - filipinas
 
-  # Oceanía
+  # Oceania
   - australia
   - sydney
   - melbourne
@@ -297,7 +297,7 @@ foreign_countries:
   - nueva zelanda
   - auckland
 
-  # Oriente Medio
+  # Middle East
   - israel
   - tel aviv
   - jerusalem
@@ -312,7 +312,7 @@ foreign_countries:
   - iran
   - irán
 
-  # África
+  # Africa
   - south africa
   - sudáfrica
   - cape town

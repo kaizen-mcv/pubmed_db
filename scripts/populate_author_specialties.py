@@ -1,18 +1,16 @@
 #!/usr/bin/env python3
-"""
-Poblar la tabla author_specialties con especialidades inferidas.
+"""Populates the author_specialties table with inferred specialties.
 
-Este script analiza todos los autores únicos y sus artículos para inferir
-especialidades médicas basándose únicamente en las afiliaciones de los autores.
+This script analyzes all unique authors and their articles to infer medical
+specialties based solely on the authors' affiliations.
 
-La afiliación es el único campo 100% fiable para determinar la especialidad
-de cada autor individual (un artículo puede tener autores de múltiples
-especialidades).
+The affiliation is the only 100% reliable field to determine the specialty of
+each individual author (an article may have authors from multiple specialties).
 
-Uso:
-    python scripts/populate_author_specialties.py           # Ejecutar
-    python scripts/populate_author_specialties.py --limit 1000  # Solo 1000 autores
-    python scripts/populate_author_specialties.py --incremental # Solo autores nuevos
+Usage:
+    python scripts/populate_author_specialties.py               # Run
+    python scripts/populate_author_specialties.py --limit 1000  # Only 1000 authors
+    python scripts/populate_author_specialties.py --incremental # Only new authors
 """
 
 import argparse
@@ -21,7 +19,7 @@ from pathlib import Path
 from collections import defaultdict
 from datetime import datetime
 
-# Añadir el directorio raíz al path
+# Add the root directory to the path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from config.settings import settings
@@ -30,19 +28,18 @@ from src.services.specialty_service import SpecialtyService
 
 
 def get_unique_authors(cur, limit=None, incremental=False):
-    """
-    Obtiene la lista de autores únicos.
+    """Fetches the list of unique authors.
 
     Args:
-        cur: Cursor de base de datos
-        limit: Número máximo de autores a procesar
-        incremental: Si True, solo procesa autores sin especialidades
+        cur: Database cursor.
+        limit: Maximum number of authors to process.
+        incremental: If True, only processes authors without specialties.
 
     Returns:
-        Lista de tuplas (author_name, author_orcid)
+        List of (author_name, author_orcid) tuples.
     """
     if incremental:
-        # Solo autores que no tienen especialidades asignadas
+        # Only authors that do not have specialties assigned
         query = """
             SELECT DISTINCT pa.author_name, pa.author_orcid
             FROM raw.pubmed_authors pa
@@ -64,11 +61,10 @@ def get_unique_authors(cur, limit=None, incremental=False):
 
 
 def get_author_articles(cur, author_name):
-    """
-    Obtiene los artículos de un autor.
+    """Fetches the articles of an author.
 
     Returns:
-        Lista de pubmed_ids
+        List of pubmed_ids.
     """
     cur.execute("""
         SELECT DISTINCT pubmed_id
@@ -79,16 +75,15 @@ def get_author_articles(cur, author_name):
 
 
 def infer_author_specialties(cur, author_name, article_ids):
-    """
-    Infiere las especialidades de un autor basándose en sus artículos.
+    """Infers the specialties of an author based on their articles.
 
-    Combina las especialidades de todos los artículos (basadas en afiliaciones)
-    y calcula un score agregado para cada especialidad.
+    Combines specialties across all articles (based on affiliations) and
+    computes an aggregated score for each specialty.
 
     Returns:
-        Dict de {snomed_code: {confidence, article_count, name_en, name_es}}
+        Dict of {snomed_code: {confidence, article_count, name_en, name_es}}.
     """
-    # Agregar especialidades de todos los artículos
+    # Aggregate specialties from all articles
     specialty_data = defaultdict(lambda: {
         'total_confidence': 0.0,
         'article_count': 0,
@@ -110,10 +105,10 @@ def infer_author_specialties(cur, author_name, article_ids):
                 specialty_data[code]['name_es'] = spec['name_es']
 
         except Exception:
-            # Ignorar errores en artículos individuales
+            # Ignore errors on individual articles
             continue
 
-    # Calcular confianza promedio para cada especialidad
+    # Compute average confidence for each specialty
     results = {}
     for code, data in specialty_data.items():
         if data['article_count'] > 0:
@@ -128,10 +123,9 @@ def infer_author_specialties(cur, author_name, article_ids):
 
 
 def save_author_specialties(cur, author_name, author_orcid, specialties):
-    """
-    Guarda las especialidades de un autor en la BD.
+    """Saves the specialties of an author into the DB.
 
-    Usa INSERT ... ON CONFLICT para actualizar si ya existe.
+    Uses INSERT ... ON CONFLICT to update if they already exist.
     """
     for snomed_code, data in specialties.items():
         cur.execute("""
@@ -156,23 +150,23 @@ def save_author_specialties(cur, author_name, author_orcid, specialties):
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Poblar tabla author_specialties con especialidades inferidas'
+        description='Populate the author_specialties table with inferred specialties'
     )
     parser.add_argument(
         '--limit',
         type=int,
-        help='Número máximo de autores a procesar'
+        help='Maximum number of authors to process'
     )
     parser.add_argument(
         '--incremental',
         action='store_true',
-        help='Solo procesar autores sin especialidades asignadas'
+        help='Only process authors without specialties assigned'
     )
     parser.add_argument(
         '--commit-every',
         type=int,
         default=100,
-        help='Hacer commit cada N autores (default: 100)'
+        help='Commit every N authors (default: 100)'
     )
     args = parser.parse_args()
 
@@ -183,7 +177,7 @@ def main():
 
     try:
         with db.cursor_context() as cur:
-            # Obtener autores únicos
+            # Fetch unique authors
             print("\nObteniendo lista de autores...")
             authors = get_unique_authors(cur, args.limit, args.incremental)
             total_authors = len(authors)
@@ -193,7 +187,7 @@ def main():
                 print("No hay autores para procesar.")
                 return
 
-            # Estadísticas
+            # Stats
             processed = 0
             with_specialties = 0
             total_specialties = 0
@@ -201,35 +195,35 @@ def main():
             print("\nProcesando autores...")
 
             for i, (author_name, author_orcid) in enumerate(authors):
-                # Obtener artículos del autor
+                # Fetch the author's articles
                 articles = get_author_articles(cur, author_name)
 
                 if not articles:
                     processed += 1
                     continue
 
-                # Inferir especialidades
+                # Infer specialties
                 specialties = infer_author_specialties(cur, author_name, articles)
 
                 if specialties:
-                    # Guardar en BD
+                    # Save to DB
                     save_author_specialties(cur, author_name, author_orcid, specialties)
                     with_specialties += 1
                     total_specialties += len(specialties)
 
                 processed += 1
 
-                # Commit periódico
+                # Periodic commit
                 if processed % args.commit_every == 0:
                     db.commit()
                     pct = processed / total_authors * 100
                     print(f"  Procesados: {processed:,}/{total_authors:,} ({pct:.1f}%) - "
                           f"Con especialidades: {with_specialties:,}")
 
-            # Commit final
+            # Final commit
             db.commit()
 
-            # Estadísticas finales
+            # Final stats
             print("\n" + "=" * 60)
             print("COMPLETADO")
             print("=" * 60)
@@ -239,7 +233,7 @@ def main():
             print(f"Total especialidades asignadas: {total_specialties:,}")
             print(f"Promedio especialidades/autor: {total_specialties/max(with_specialties,1):.2f}")
 
-            # Verificar en BD
+            # Verify in DB
             cur.execute("SELECT COUNT(*) FROM sm_result.author_specialties")
             total_in_db = cur.fetchone()[0]
             print(f"\nTotal registros en author_specialties: {total_in_db:,}")

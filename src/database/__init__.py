@@ -1,4 +1,4 @@
-# Capa de acceso a base de datos
+# Database access layer
 from .connection import DatabaseConnection
 
 __all__ = ['DatabaseConnection']

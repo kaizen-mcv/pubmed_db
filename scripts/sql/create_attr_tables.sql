@@ -1,15 +1,15 @@
 -- ============================================================================
--- Tablas de atributos normalizados
--- Extrae valores únicos de las tablas brutas para evitar duplicados
--- Schema: sm_attr (atributos normalizados)
+-- Normalized attribute tables
+-- Extract unique values from raw tables to avoid duplicates
+-- Schema: sm_attr (normalized attributes)
 -- ============================================================================
 
--- Crear schema si no existe
+-- Create schema if it does not exist
 CREATE SCHEMA IF NOT EXISTS sm_attr;
 
 -- ============================================================================
--- Tabla: sm_attr.journals
--- Revistas únicas de los artículos
+-- Table: sm_attr.journals
+-- Unique journals from the articles
 -- ============================================================================
 DROP TABLE IF EXISTS sm_attr.journals CASCADE;
 
@@ -26,12 +26,12 @@ CREATE INDEX idx_journals_issn ON sm_attr.journals(journal_issn);
 CREATE INDEX idx_journals_name ON sm_attr.journals(journal_name);
 CREATE INDEX idx_journals_name_pattern ON sm_attr.journals(journal_name varchar_pattern_ops);
 
-COMMENT ON TABLE sm_attr.journals IS 'Revistas únicas extraídas de pubmed_articles';
-COMMENT ON COLUMN sm_attr.journals.journal_issn IS 'ISSN de la revista';
-COMMENT ON COLUMN sm_attr.journals.journal_name IS 'Nombre de la revista';
-COMMENT ON COLUMN sm_attr.journals.article_count IS 'Número de artículos en esta revista';
+COMMENT ON TABLE sm_attr.journals IS 'Unique journals extracted from pubmed_articles';
+COMMENT ON COLUMN sm_attr.journals.journal_issn IS 'Journal ISSN';
+COMMENT ON COLUMN sm_attr.journals.journal_name IS 'Journal name';
+COMMENT ON COLUMN sm_attr.journals.article_count IS 'Number of articles in this journal';
 
--- Poblar journals
+-- Populate journals
 INSERT INTO sm_attr.journals (journal_issn, journal_name, article_count)
 SELECT
     journal_issn,
@@ -43,8 +43,8 @@ GROUP BY journal_issn, journal_name
 ORDER BY article_count DESC;
 
 -- ============================================================================
--- Tabla: sm_attr.keywords
--- Palabras clave únicas de autores
+-- Table: sm_attr.keywords
+-- Unique author keywords
 -- ============================================================================
 DROP TABLE IF EXISTS sm_attr.keywords CASCADE;
 
@@ -58,11 +58,11 @@ CREATE TABLE sm_attr.keywords (
 CREATE INDEX idx_keywords_text ON sm_attr.keywords(keyword_text);
 CREATE INDEX idx_keywords_text_pattern ON sm_attr.keywords(keyword_text varchar_pattern_ops);
 
-COMMENT ON TABLE sm_attr.keywords IS 'Palabras clave únicas de autores extraídas de pubmed_articles.author_keywords';
-COMMENT ON COLUMN sm_attr.keywords.keyword_text IS 'Texto de la palabra clave (normalizado)';
-COMMENT ON COLUMN sm_attr.keywords.article_count IS 'Número de artículos que usan esta keyword';
+COMMENT ON TABLE sm_attr.keywords IS 'Unique author keywords extracted from pubmed_articles.author_keywords';
+COMMENT ON COLUMN sm_attr.keywords.keyword_text IS 'Keyword text (normalized)';
+COMMENT ON COLUMN sm_attr.keywords.article_count IS 'Number of articles using this keyword';
 
--- Poblar keywords (filtrar datos malformados)
+-- Populate keywords (filter malformed data)
 INSERT INTO sm_attr.keywords (keyword_text, article_count)
 SELECT
     TRIM(keyword) as keyword_text,
@@ -80,8 +80,8 @@ GROUP BY TRIM(keyword)
 ORDER BY article_count DESC;
 
 -- ============================================================================
--- Tabla: sm_attr.affiliations
--- Afiliaciones únicas de autores
+-- Table: sm_attr.affiliations
+-- Unique author affiliations
 -- ============================================================================
 DROP TABLE IF EXISTS sm_attr.affiliations CASCADE;
 
@@ -95,11 +95,11 @@ CREATE TABLE sm_attr.affiliations (
 CREATE INDEX idx_affiliations_text ON sm_attr.affiliations USING gin(to_tsvector('english', affiliation_text));
 CREATE INDEX idx_affiliations_author_count ON sm_attr.affiliations(author_count DESC);
 
-COMMENT ON TABLE sm_attr.affiliations IS 'Afiliaciones únicas extraídas de pubmed_authors.affiliation';
-COMMENT ON COLUMN sm_attr.affiliations.affiliation_text IS 'Texto completo de la afiliación';
-COMMENT ON COLUMN sm_attr.affiliations.author_count IS 'Número de autores con esta afiliación';
+COMMENT ON TABLE sm_attr.affiliations IS 'Unique affiliations extracted from pubmed_authors.affiliation';
+COMMENT ON COLUMN sm_attr.affiliations.affiliation_text IS 'Full affiliation text';
+COMMENT ON COLUMN sm_attr.affiliations.author_count IS 'Number of authors with this affiliation';
 
--- Poblar affiliations
+-- Populate affiliations
 INSERT INTO sm_attr.affiliations (affiliation_text, author_count)
 SELECT
     affiliation as affiliation_text,
@@ -111,8 +111,8 @@ GROUP BY affiliation
 ORDER BY author_count DESC;
 
 -- ============================================================================
--- Tabla: sm_attr.mesh_terms_articles
--- Términos MeSH únicos de artículos
+-- Table: sm_attr.mesh_terms_articles
+-- Unique MeSH terms from articles
 -- ============================================================================
 DROP TABLE IF EXISTS sm_attr.mesh_terms_articles CASCADE;
 
@@ -127,11 +127,11 @@ CREATE INDEX idx_mesh_terms_articles_text ON sm_attr.mesh_terms_articles(mesh_te
 CREATE INDEX idx_mesh_terms_articles_pattern ON sm_attr.mesh_terms_articles(mesh_term_text varchar_pattern_ops);
 CREATE INDEX idx_mesh_terms_articles_count ON sm_attr.mesh_terms_articles(article_count DESC);
 
-COMMENT ON TABLE sm_attr.mesh_terms_articles IS 'Términos MeSH únicos extraídos de pubmed_articles.mesh_terms';
-COMMENT ON COLUMN sm_attr.mesh_terms_articles.mesh_term_text IS 'Nombre del término MeSH';
-COMMENT ON COLUMN sm_attr.mesh_terms_articles.article_count IS 'Número de artículos que tienen este MeSH term';
+COMMENT ON TABLE sm_attr.mesh_terms_articles IS 'Unique MeSH terms extracted from pubmed_articles.mesh_terms';
+COMMENT ON COLUMN sm_attr.mesh_terms_articles.mesh_term_text IS 'MeSH term name';
+COMMENT ON COLUMN sm_attr.mesh_terms_articles.article_count IS 'Number of articles that have this MeSH term';
 
--- Poblar mesh_terms_articles
+-- Populate mesh_terms_articles
 INSERT INTO sm_attr.mesh_terms_articles (mesh_term_text, article_count)
 SELECT
     TRIM(mesh_term) as mesh_term_text,
@@ -145,13 +145,13 @@ GROUP BY TRIM(mesh_term)
 ORDER BY article_count DESC;
 
 -- ============================================================================
--- Resumen final
+-- Final summary
 -- ============================================================================
-SELECT 'sm_attr.journals' as tabla, COUNT(*) as registros FROM sm_attr.journals
+SELECT 'sm_attr.journals' as table_name, COUNT(*) as row_count FROM sm_attr.journals
 UNION ALL
 SELECT 'sm_attr.keywords', COUNT(*) FROM sm_attr.keywords
 UNION ALL
 SELECT 'sm_attr.affiliations', COUNT(*) FROM sm_attr.affiliations
 UNION ALL
 SELECT 'sm_attr.mesh_terms_articles', COUNT(*) FROM sm_attr.mesh_terms_articles
-ORDER BY tabla;
+ORDER BY table_name;

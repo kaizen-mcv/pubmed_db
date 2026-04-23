@@ -1,7 +1,7 @@
 """
-Modelo de datos para artículos de PubMed.
+Data model for PubMed articles.
 
-Campos extraídos directamente de PubMed (sin marca).
+Fields extracted directly from PubMed (unbranded).
 """
 
 from dataclasses import dataclass, field
@@ -14,47 +14,47 @@ from .author import Author
 @dataclass
 class Article:
     """
-    Representa un artículo científico de PubMed.
+    Represents a PubMed scientific article.
 
-    Atributos de PubMed:
-        pubmed_id: ID único del artículo en PubMed
-        article_title: Título completo del artículo
-        article_abstract: Resumen/Abstract del artículo
-        journal_name: Nombre de la revista científica
-        journal_issn: ISSN de la revista
-        publication_date: Fecha de publicación
+    PubMed attributes:
+        pubmed_id: Unique article ID in PubMed
+        article_title: Full article title
+        article_abstract: Article abstract/summary
+        journal_name: Scientific journal name
+        journal_issn: Journal ISSN
+        publication_date: Publication date
         article_doi: Digital Object Identifier
-        publication_types: Tipos de publicación (ej: "Journal Article; Review")
-        mesh_terms: Términos MeSH (vocabulario médico controlado)
-        author_keywords: Palabras clave definidas por el autor
-        authors: Lista de autores del artículo
+        publication_types: Publication types (e.g. "Journal Article; Review")
+        mesh_terms: MeSH terms (controlled medical vocabulary)
+        author_keywords: Keywords defined by the author
+        authors: List of article authors
     """
 
-    # Identificador
+    # Identifier
     pubmed_id: int
 
-    # Contenido principal
+    # Main content
     article_title: str = ""
     article_abstract: Optional[str] = None
 
-    # Información de la revista
+    # Journal information
     journal_name: Optional[str] = None
     journal_issn: Optional[str] = None
 
-    # Identificador adicional
+    # Additional identifier
     article_doi: Optional[str] = None
 
-    # Fecha
+    # Date
     publication_date: Optional[date] = None
 
-    # Tipo de publicación
+    # Publication type
     publication_types: Optional[str] = None
 
-    # Metadatos
+    # Metadata
     mesh_terms: Optional[str] = None
     author_keywords: Optional[str] = None
 
-    # Autores
+    # Authors
     authors: List[Author] = field(default_factory=list)
 
     def __str__(self) -> str:

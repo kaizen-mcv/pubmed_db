@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-"""
-Descarga e importa todos los términos MeSH a PostgreSQL.
+"""Downloads and imports all MeSH terms into PostgreSQL.
 
-Fuente: NLM MeSH ASCII files
+Source: NLM MeSH ASCII files
 URL: https://nlmpubs.nlm.nih.gov/projects/mesh/MESH_FILES/asciimesh/
 
-Uso:
+Usage:
     python scripts/import_mesh_terms.py
     python scripts/import_mesh_terms.py --year 2024
 """
@@ -18,7 +17,7 @@ from pathlib import Path
 import requests
 import psycopg2
 
-# Añadir el directorio raíz al path
+# Add the root directory to the path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from config.settings import settings
@@ -28,19 +27,19 @@ MESH_BASE_URL = "https://nlmpubs.nlm.nih.gov/projects/mesh/MESH_FILES/asciimesh"
 
 
 def get_mesh_url(year: int = 2025) -> str:
-    """Construye la URL del archivo MeSH para el año especificado."""
+    """Builds the MeSH file URL for the specified year."""
     return f"{MESH_BASE_URL}/d{year}.bin"
 
 
 def download_mesh(year: int = 2025) -> str:
-    """Descarga el archivo ASCII de descriptores MeSH."""
+    """Downloads the MeSH descriptors ASCII file."""
     url = get_mesh_url(year)
     print(f"Descargando MeSH {year} desde {url}...")
 
     response = requests.get(url, timeout=300)
     response.raise_for_status()
 
-    # El archivo está en ISO-8859-1
+    # The file is in ISO-8859-1
     content = response.content.decode('utf-8', errors='replace')
     print(f"Descargado: {len(content):,} caracteres")
 
@@ -48,25 +47,24 @@ def download_mesh(year: int = 2025) -> str:
 
 
 def parse_mesh_records(content: str) -> list:
-    """
-    Parsea el contenido ASCII de MeSH y extrae los registros.
+    """Parses the MeSH ASCII content and extracts the records.
 
-    Formato ASCII MeSH:
-    *NEWRECORD
-    RECTYPE = D
-    MH = Cardiovascular Diseases
-    ...
-    MN = C14
-    MN = C14.280
-    ...
-    UI = D002318
+    MeSH ASCII format:
+        *NEWRECORD
+        RECTYPE = D
+        MH = Cardiovascular Diseases
+        ...
+        MN = C14
+        MN = C14.280
+        ...
+        UI = D002318
     """
     records = []
 
-    # Dividir por registros (separados por *NEWRECORD)
+    # Split by records (separated by *NEWRECORD)
     raw_records = content.split('*NEWRECORD')
 
-    for raw_record in raw_records[1:]:  # Saltar el primero (cabecera)
+    for raw_record in raw_records[1:]:  # Skip the first one (header)
         record = parse_single_record(raw_record)
         if record and record.get('mesh_ui') and record.get('mesh_name'):
             records.append(record)
@@ -75,8 +73,8 @@ def parse_mesh_records(content: str) -> list:
 
 
 def parse_single_record(raw_record: str) -> dict:
-    """Parsea un único registro MeSH."""
-    # Extraer campos usando regex
+    """Parses a single MeSH record."""
+    # Extract fields using regex
     mesh_ui = re.search(r'^UI = (.+)$', raw_record, re.MULTILINE)
     mesh_name = re.search(r'^MH = (.+)$', raw_record, re.MULTILINE)
     tree_numbers = re.findall(r'^MN = (.+)$', raw_record, re.MULTILINE)
@@ -85,7 +83,7 @@ def parse_single_record(raw_record: str) -> dict:
     if not mesh_ui or not mesh_name:
         return None
 
-    # Determinar categoría padre del primer tree number
+    # Determine the parent category from the first tree number
     parent_category = None
     if tree_numbers:
         parent_category = tree_numbers[0][0] if tree_numbers[0] else None
@@ -100,7 +98,7 @@ def parse_single_record(raw_record: str) -> dict:
 
 
 def create_table(cursor):
-    """Crea la tabla nlm_mesh_terms si no existe."""
+    """Creates the nlm_mesh_terms table if it does not exist."""
     cursor.execute("""
         DROP TABLE IF EXISTS nlm_mesh_terms CASCADE;
 
@@ -123,7 +121,7 @@ def create_table(cursor):
 
 
 def import_to_db(records: list, db_config: dict):
-    """Inserta los registros en PostgreSQL."""
+    """Inserts the records into PostgreSQL."""
     conn = psycopg2.connect(
         host=db_config['host'],
         port=db_config['port'],
@@ -135,12 +133,12 @@ def import_to_db(records: list, db_config: dict):
     try:
         cursor = conn.cursor()
 
-        # Crear tabla
+        # Create table
         print("Creando tabla nlm_mesh_terms...")
         create_table(cursor)
         conn.commit()
 
-        # Insertar registros en lotes
+        # Insert records in batches
         print(f"Insertando {len(records):,} registros...")
         batch_size = 1000
         inserted = 0
@@ -165,12 +163,12 @@ def import_to_db(records: list, db_config: dict):
             inserted += len(batch)
             print(f"  Insertados: {inserted:,} / {len(records):,}")
 
-        # Verificar
+        # Verify
         cursor.execute("SELECT COUNT(*) FROM nlm_mesh_terms")
         total = cursor.fetchone()[0]
         print(f"\nTotal registros en nlm_mesh_terms: {total:,}")
 
-        # Mostrar distribución por categoría
+        # Show distribution by category
         cursor.execute("""
             SELECT parent_category, COUNT(*) as count
             FROM nlm_mesh_terms
@@ -187,22 +185,22 @@ def import_to_db(records: list, db_config: dict):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Importa términos MeSH a PostgreSQL')
-    parser.add_argument('--year', type=int, default=2025, help='Año de MeSH a descargar (default: 2025)')
+    parser = argparse.ArgumentParser(description='Import MeSH terms into PostgreSQL')
+    parser.add_argument('--year', type=int, default=2025, help='MeSH year to download (default: 2025)')
     args = parser.parse_args()
 
-    # Cargar configuración de BD
+    # Load DB configuration
     db_config = settings.get_db_connection_params()
 
-    # Descargar MeSH
+    # Download MeSH
     content = download_mesh(args.year)
 
-    # Parsear registros
+    # Parse records
     print("Parseando registros MeSH...")
     records = parse_mesh_records(content)
     print(f"Parseados: {len(records):,} registros")
 
-    # Importar a BD
+    # Import to DB
     import_to_db(records, db_config)
 
     print("\n¡Importación completada!")

@@ -1,7 +1,7 @@
 """
-Extractor de información de autores.
+Author information extractor.
 
-Extrae: author_lastname, author_forename, author_position, author_orcid, author_email
+Extracts: author_lastname, author_forename, author_position, author_orcid, author_email
 """
 
 from typing import Any, Dict, List, Optional
@@ -15,32 +15,32 @@ from src.models.author import Author
 
 class AuthorExtractor:
     """
-    Extrae información de autores de un artículo de PubMed.
+    Extracts author information from a PubMed article.
     """
 
     @staticmethod
     def extract_author_orcid(author_data: Dict[str, Any]) -> Optional[str]:
         """
-        Extrae el ORCID del autor si existe.
+        Extract the author's ORCID if it exists.
 
         Args:
-            author_data: Diccionario con datos del autor (de AuthorList)
+            author_data: Dictionary with author data (from AuthorList)
 
         Returns:
-            ORCID del autor (ej: "0000-0001-2345-6789") o None
+            Author ORCID (e.g. "0000-0001-2345-6789") or None
         """
         if 'Identifier' not in author_data:
             return None
 
         identifiers = author_data['Identifier']
 
-        # Si es lista de identificadores
+        # If it is a list of identifiers
         if isinstance(identifiers, list):
             for identifier in identifiers:
                 if hasattr(identifier, 'attributes'):
                     if identifier.attributes.get('Source') == 'ORCID':
                         return str(identifier)
-        # Si es un único identificador
+        # If it is a single identifier
         elif hasattr(identifiers, 'attributes'):
             if identifiers.attributes.get('Source') == 'ORCID':
                 return str(identifiers)
@@ -50,29 +50,29 @@ class AuthorExtractor:
     @staticmethod
     def extract_author_email(author_data: Dict[str, Any]) -> Optional[str]:
         """
-        Extrae el email del autor si está disponible.
+        Extract the author's email if available.
 
-        NOTA: Muy pocos autores proporcionan email en PubMed.
-        Este campo rara vez estará disponible.
+        NOTE: Very few authors provide email in PubMed.
+        This field will rarely be available.
 
         Args:
-            author_data: Diccionario con datos del autor
+            author_data: Dictionary with author data
 
         Returns:
-            Email del autor o None (casi siempre None)
+            Author email or None (almost always None)
         """
         return author_data.get('Email', None)
 
     @staticmethod
     def extract_authors(article_data: Dict[str, Any]) -> List[Author]:
         """
-        Extrae la lista completa de autores del artículo.
+        Extract the full list of authors of the article.
 
         Args:
-            article_data: Diccionario con datos del artículo
+            article_data: Dictionary with article data
 
         Returns:
-            Lista de objetos Author con lastname, forename, position, orcid y email
+            List of Author objects with lastname, forename, position, orcid and email
         """
         article = article_data['MedlineCitation']['Article']
         author_list = article.get('AuthorList', [])
@@ -80,7 +80,7 @@ class AuthorExtractor:
         authors = []
 
         for position, author_data in enumerate(author_list, start=1):
-            # Algunos "autores" son colectivos sin LastName
+            # Some "authors" are collective entries without LastName
             if 'LastName' not in author_data:
                 continue
 
@@ -102,17 +102,17 @@ class AuthorExtractor:
         position: int
     ) -> Author:
         """
-        Extrae un autor específico por su posición.
+        Extract a specific author by their position.
 
         Args:
-            article_data: Diccionario con datos del artículo
-            position: Posición del autor (1-indexed)
+            article_data: Dictionary with article data
+            position: Author position (1-indexed)
 
         Returns:
-            Objeto Author o None si no existe
+            Author object or None if it does not exist
 
         Raises:
-            IndexError: Si la posición no existe
+            IndexError: If the position does not exist
         """
         authors = AuthorExtractor.extract_authors(article_data)
 
@@ -120,31 +120,31 @@ class AuthorExtractor:
             if author.author_position == position:
                 return author
 
-        raise IndexError(f"No existe autor en posición {position}")
+        raise IndexError(f"No author at position {position}")
 
     @staticmethod
     def get_first_author(article_data: Dict[str, Any]) -> Author:
         """
-        Extrae el primer autor del artículo.
+        Extract the first author of the article.
 
         Args:
-            article_data: Diccionario con datos del artículo
+            article_data: Dictionary with article data
 
         Returns:
-            Primer autor o None
+            First author or None
         """
         return AuthorExtractor.extract_author_at_position(article_data, 1)
 
     @staticmethod
     def get_last_author(article_data: Dict[str, Any]) -> Author:
         """
-        Extrae el último autor del artículo (senior author).
+        Extract the last author of the article (senior author).
 
         Args:
-            article_data: Diccionario con datos del artículo
+            article_data: Dictionary with article data
 
         Returns:
-            Último autor o None
+            Last author or None
         """
         authors = AuthorExtractor.extract_authors(article_data)
         if authors:

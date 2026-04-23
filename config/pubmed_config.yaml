@@ -1,101 +1,100 @@
-# Configuración de descarga de PubMed
-# Políticas oficiales: https://www.ncbi.nlm.nih.gov/books/NBK25497/
+# PubMed download configuration.
+# Official NCBI usage policies: https://www.ncbi.nlm.nih.gov/books/NBK25497/
 
-# === POLÍTICAS DE ACCESO NCBI ===
+# === NCBI RATE LIMITS ===
 rate_limiting:
-  # API Key gratuita: máximo 10 requests/segundo
-  # Sin API Key: máximo 3 requests/segundo
+  # With a free API key: up to 10 requests/second.
+  # Without: up to 3 requests/second.
   requests_per_second: 3
 
-  # Tiempo de espera mínimo entre requests (en segundos)
-  min_delay_between_requests: 0.34  # ~3 requests/segundo
+  # Minimum delay between requests, in seconds.
+  min_delay_between_requests: 0.34  # ~3 requests/second
 
-  # Requests por segundo fuera de horas pico (weekends, 9pm-5am EST)
+  # Off-peak window is more permissive (weekends, 9pm-5am EST).
   requests_per_second_off_peak: 10
   min_delay_off_peak: 0.1
 
-# === CONFIGURACIÓN DE LOTES ===
+# === BATCHING ===
 batch:
-  # Número de IDs a procesar por lote (efetch acepta hasta 500)
+  # IDs to process per batch (efetch accepts up to 500).
   ids_per_batch: 200
 
-  # Número de resultados por búsqueda (esearch retmax)
+  # Results per search (esearch retmax).
   search_batch_size: 10000
 
-  # Máximo de reintentos por error
+  # Max retries per transient error.
   max_retries: 3
 
-  # Tiempo de espera entre reintentos (segundos)
+  # Seconds between retries (exponential backoff is applied).
   retry_delay: 5
 
-  # Pausa entre lotes (segundos) - margen de seguridad extra
+  # Safety pause between batches, in seconds.
   batch_delay: 30
 
-# === CONFIGURACIÓN DE DESCARGA ===
+# === DOWNLOAD ===
 download:
-  # Email requerido por NCBI E-utilities: usa uno real, es obligatorio y
-  # NCBI puede contactarte si tus requests generan problemas.
+  # NCBI E-utilities requires a real email address: it is mandatory and
+  # NCBI may contact you if your requests cause problems.
   email: "your-email@example.com"
 
-  # API Key (opcional, aumenta rate limit a 10/s)
-  # Obtener en: https://www.ncbi.nlm.nih.gov/account/settings/
+  # Optional API key (raises the rate limit to 10 req/s).
+  # Get one for free at: https://www.ncbi.nlm.nih.gov/account/settings/
   api_key: null
 
-  # Base de datos a consultar
+  # Entrez database to query.
   database: "pubmed"
 
-  # Tipo de retorno para efetch
+  # efetch return type.
   rettype: "xml"
 
-  # Modo de retorno
+  # Return mode.
   retmode: "xml"
 
-# === QUERY DE BÚSQUEDA ===
+# === SEARCH QUERY ===
 search:
-  # Query principal (ajustar según necesidad)
+  # Main search expression (tweak to taste).
   query: "Spain[Affiliation]"
 
-  # Filtro de fechas (opcional)
-  # Formato: YYYY/MM/DD o YYYY/MM o YYYY
+  # Optional date range. Accepted formats: YYYY/MM/DD, YYYY/MM, YYYY.
   date_from: "2015/01/01"
   date_to: "2025/12/31"
 
-  # Máximo de artículos a descargar (null = sin límite)
+  # Maximum number of articles to download (null = unlimited).
   max_articles: null
 
-# === GESTIÓN DE ESTADO ===
+# === STATE MANAGEMENT ===
 state:
-  # Archivo para guardar progreso
+  # File used to persist download progress (for --resume).
   state_file: "data/download_state.json"
 
-  # Frecuencia de guardado del estado (cada N artículos)
+  # How often to flush state to disk (every N articles).
   save_frequency: 100
 
-  # Directorio para logs
+  # Directory for logs.
   log_dir: "data/logs"
 
-  # Nivel de log (DEBUG, INFO, WARNING, ERROR)
+  # Log level: DEBUG, INFO, WARNING, ERROR.
   log_level: "INFO"
 
-# === CONFIGURACIÓN DE BASE DE DATOS ===
+# === DATABASE WRITE BEHAVIOUR ===
 database_config:
-  # Frecuencia de commit a la BD (cada N artículos)
+  # COMMIT every N articles.
   commit_frequency: 50
 
-  # Usar transacciones para mejor rendimiento
+  # Wrap batches in transactions for better throughput.
   use_transactions: true
 
-  # Pool de conexiones (para futuras optimizaciones)
+  # Reserved for future connection-pool tuning.
   connection_pool_size: 5
 
-# === TOLERANCIA A FALLOS ===
+# === FAULT TOLERANCE ===
 fault_tolerance:
-  # Continuar ante errores de parsing
+  # Keep going on malformed records.
   skip_malformed_records: true
 
-  # Continuar ante errores de BD
+  # Keep going on database errors.
   skip_db_errors: true
 
-  # Guardar registros con error en archivo separado
+  # Dump failed records to a side file.
   save_error_records: true
   error_file: "data/error_records.json"

@@ -1,10 +1,10 @@
 """
-(VL) Filtro de afiliaciones españolas.
+(VL) Spanish affiliations filter.
 
-Este módulo contiene lógica LOCAL del proyecto para identificar
-si una afiliación pertenece a una institución española.
+This module contains project-LOCAL logic to identify whether
+an affiliation belongs to a Spanish institution.
 
-Usa la configuración de config/spanish_filters.yaml
+Uses the configuration in config/spanish_filters.yaml
 """
 
 import re
@@ -19,15 +19,15 @@ from config.settings import settings
 
 class SpanishFilter:
     """
-    (VL) Filtro para identificar afiliaciones españolas.
+    (VL) Filter to identify Spanish affiliations.
 
-    Criterio estricto:
-    - Debe contener un marcador español (spain, españa, etc.)
-    - NO debe contener países extranjeros (lista negra)
+    Strict criterion:
+    - Must contain a Spanish marker (spain, españa, etc.)
+    - Must NOT contain foreign countries (blacklist)
     """
 
     def __init__(self):
-        """Inicializa el filtro con configuración de YAML."""
+        """Initialize the filter with configuration from YAML."""
         self.spanish_markers = [
             m.lower() for m in settings.get_spanish_markers()
         ]
@@ -40,27 +40,27 @@ class SpanishFilter:
 
     def is_spanish_affiliation(self, affiliation_text: str) -> bool:
         """
-        (VL) Verifica si una afiliación es EXCLUSIVAMENTE española.
+        (VL) Check whether an affiliation is EXCLUSIVELY Spanish.
 
-        RECHAZA afiliaciones que mencionen países extranjeros.
+        REJECTS affiliations that mention foreign countries.
 
         Args:
-            affiliation_text: Texto de la afiliación
+            affiliation_text: Affiliation text
 
         Returns:
-            True si la afiliación es española
+            True if the affiliation is Spanish
         """
         if not affiliation_text:
             return False
 
         aff_lower = affiliation_text.lower()
 
-        # LISTA NEGRA: Si menciona cualquier país extranjero → RECHAZAR
+        # BLACKLIST: if it mentions any foreign country -> REJECT
         for country in self.foreign_countries:
             if country in aff_lower:
                 return False
 
-        # LISTA BLANCA: Debe contener marcador español
+        # WHITELIST: must contain a Spanish marker
         has_spanish_marker = any(
             marker in aff_lower for marker in self.spanish_markers
         )
@@ -72,23 +72,23 @@ class SpanishFilter:
         affiliation_text: str
     ) -> Optional[str]:
         """
-        (VL) Filtra y retorna solo las partes españolas de una afiliación múltiple.
+        (VL) Filter and return only the Spanish parts of a multi-part affiliation.
 
-        Divide por separadores comunes y verifica cada parte individualmente.
+        Splits by common separators and checks each part individually.
 
         Args:
-            affiliation_text: Texto de afiliación (puede tener múltiples)
+            affiliation_text: Affiliation text (may contain multiple parts)
 
         Returns:
-            Solo las partes españolas o None si ninguna es española
+            Only the Spanish parts, or None if none is Spanish
         """
         if not affiliation_text:
             return None
 
-        # Separar por punto y coma (separador más común)
+        # Split by semicolon (most common separator)
         parts = []
         for segment in affiliation_text.split(';'):
-            # Separar cada segmento por punto si está seguido de espacio y mayúscula
+            # Split each segment by period if followed by space and uppercase letter
             subsegments = re.split(r'\.\s+(?=[A-Z])', segment)
             parts.extend(subsegments)
 
@@ -106,13 +106,13 @@ class SpanishFilter:
         affiliations: List[str]
     ) -> List[str]:
         """
-        (VL) Filtra una lista de afiliaciones y retorna solo las españolas.
+        (VL) Filter a list of affiliations and return only the Spanish ones.
 
         Args:
-            affiliations: Lista de textos de afiliación
+            affiliations: List of affiliation texts
 
         Returns:
-            Lista con solo afiliaciones españolas
+            List containing only Spanish affiliations
         """
         spanish = []
 
@@ -124,5 +124,5 @@ class SpanishFilter:
         return spanish
 
 
-# Instancia global para uso conveniente
+# Global instance for convenient use
 spanish_filter = SpanishFilter()

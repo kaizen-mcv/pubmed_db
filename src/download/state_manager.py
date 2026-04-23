@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-Gestor de estado para reanudar descargas interrumpidas.
+State manager to resume interrupted downloads.
 
-Guarda progreso en archivo JSON para poder continuar tras:
-- Interrupciones manuales (Ctrl+C)
-- Errores de red
-- Errores de sistema
-- Reinicios del servidor
+Saves progress to a JSON file so the download can continue after:
+- Manual interruptions (Ctrl+C)
+- Network errors
+- System errors
+- Server restarts
 """
 
 import json
@@ -18,31 +18,31 @@ from pathlib import Path
 
 class DownloadState:
     """
-    Gestor de estado persistente para descargas de PubMed.
+    Persistent state manager for PubMed downloads.
 
-    Mantiene registro de:
-    - PMIDs ya descargados
-    - PMIDs con error
-    - Progreso de la descarga
-    - Estadísticas
+    Keeps track of:
+    - PMIDs already downloaded
+    - PMIDs with errors
+    - Download progress
+    - Statistics
     """
 
     def __init__(self, state_file: str):
         """
-        Inicializa el gestor de estado.
+        Initialize the state manager.
 
         Args:
-            state_file: Ruta al archivo de estado JSON
+            state_file: Path to the JSON state file
         """
         self.state_file = Path(state_file)
         self.state_file.parent.mkdir(parents=True, exist_ok=True)
 
-        # Estado en memoria
+        # In-memory state
         self.downloaded_pmids: Set[int] = set()
         self.failed_pmids: Set[int] = set()
         self.metadata: Dict[str, Any] = {}
 
-        # Estadísticas
+        # Statistics
         self.stats = {
             "total_downloaded": 0,
             "total_failed": 0,
@@ -50,14 +50,14 @@ class DownloadState:
             "start_time": None,
             "last_update": None,
             "last_saved": None,
-            "last_successful_date": None,  # Para modo incremental
+            "last_successful_date": None,  # For incremental mode
         }
 
-        # Cargar estado existente si hay
+        # Load existing state if any
         self.load()
 
     def load(self):
-        """Carga el estado desde archivo JSON."""
+        """Load state from JSON file."""
         if not self.state_file.exists():
             return
 
@@ -65,14 +65,14 @@ class DownloadState:
             with open(self.state_file, "r") as f:
                 data = json.load(f)
 
-            # Restaurar sets
+            # Restore sets
             self.downloaded_pmids = set(data.get("downloaded_pmids", []))
             self.failed_pmids = set(data.get("failed_pmids", []))
 
-            # Restaurar metadata
+            # Restore metadata
             self.metadata = data.get("metadata", {})
 
-            # Restaurar estadísticas
+            # Restore statistics
             self.stats = data.get("stats", self.stats)
 
             print(f"✓ Estado cargado: {len(self.downloaded_pmids)} PMIDs descargados, "
@@ -83,9 +83,9 @@ class DownloadState:
             print("  Iniciando con estado limpio")
 
     def save(self):
-        """Guarda el estado actual a archivo JSON."""
+        """Save the current state to JSON file."""
         try:
-            # Actualizar timestamp
+            # Update timestamp
             self.stats["last_saved"] = datetime.now().isoformat()
 
             data = {
@@ -95,12 +95,12 @@ class DownloadState:
                 "stats": self.stats,
             }
 
-            # Guardar a archivo temporal primero (atomic write)
+            # Write to a temp file first (atomic write)
             temp_file = self.state_file.with_suffix(".tmp")
             with open(temp_file, "w") as f:
                 json.dump(data, f, indent=2)
 
-            # Mover archivo temporal al definitivo
+            # Move temp file to the final one
             temp_file.replace(self.state_file)
 
         except Exception as e:
@@ -108,32 +108,32 @@ class DownloadState:
 
     def mark_downloaded(self, pmid: int):
         """
-        Marca un PMID como descargado exitosamente.
+        Mark a PMID as successfully downloaded.
 
         Args:
-            pmid: PubMed ID descargado
+            pmid: Downloaded PubMed ID
         """
         self.downloaded_pmids.add(pmid)
         self.stats["total_downloaded"] += 1
         self.stats["last_update"] = datetime.now().isoformat()
 
-        # Remover de fallidos si estaba
+        # Remove from failed if it was there
         if pmid in self.failed_pmids:
             self.failed_pmids.remove(pmid)
 
     def mark_failed(self, pmid: int, error: str = ""):
         """
-        Marca un PMID como fallido.
+        Mark a PMID as failed.
 
         Args:
-            pmid: PubMed ID que falló
-            error: Mensaje de error (opcional)
+            pmid: PubMed ID that failed
+            error: Error message (optional)
         """
         self.failed_pmids.add(pmid)
         self.stats["total_failed"] += 1
         self.stats["last_update"] = datetime.now().isoformat()
 
-        # Guardar info del error en metadata
+        # Save error info in metadata
         if error:
             if "errors" not in self.metadata:
                 self.metadata["errors"] = {}
@@ -141,37 +141,37 @@ class DownloadState:
 
     def is_downloaded(self, pmid: int) -> bool:
         """
-        Verifica si un PMID ya fue descargado.
+        Check whether a PMID has already been downloaded.
 
         Args:
-            pmid: PubMed ID a verificar
+            pmid: PubMed ID to check
 
         Returns:
-            True si ya fue descargado exitosamente
+            True if already downloaded successfully
         """
         return pmid in self.downloaded_pmids
 
     def is_failed(self, pmid: int) -> bool:
         """
-        Verifica si un PMID falló previamente.
+        Check whether a PMID failed previously.
 
         Args:
-            pmid: PubMed ID a verificar
+            pmid: PubMed ID to check
 
         Returns:
-            True si falló en intento previo
+            True if it failed in a previous attempt
         """
         return pmid in self.failed_pmids
 
     def get_progress(self, total_pmids: Optional[int] = None) -> dict:
         """
-        Retorna información de progreso.
+        Return progress information.
 
         Args:
-            total_pmids: Total de PMIDs a descargar (opcional)
+            total_pmids: Total PMIDs to download (optional)
 
         Returns:
-            Diccionario con información de progreso
+            Dictionary with progress information
         """
         downloaded = len(self.downloaded_pmids)
         failed = len(self.failed_pmids)
@@ -191,7 +191,7 @@ class DownloadState:
                 (processed / total_pmids * 100) if total_pmids > 0 else 0
             )
 
-        # Calcular velocidad
+        # Calculate speed
         if self.stats["start_time"]:
             start = datetime.fromisoformat(self.stats["start_time"])
             elapsed = (datetime.now() - start).total_seconds()
@@ -207,34 +207,34 @@ class DownloadState:
 
     def set_metadata(self, key: str, value: Any):
         """
-        Guarda metadata adicional.
+        Save additional metadata.
 
         Args:
-            key: Clave del metadata
-            value: Valor a guardar
+            key: Metadata key
+            value: Value to save
         """
         self.metadata[key] = value
 
     def get_metadata(self, key: str, default: Any = None) -> Any:
         """
-        Obtiene metadata.
+        Get metadata.
 
         Args:
-            key: Clave del metadata
-            default: Valor por defecto si no existe
+            key: Metadata key
+            default: Default value if it does not exist
 
         Returns:
-            Valor del metadata o default
+            Metadata value or default
         """
         return self.metadata.get(key, default)
 
     def start_download(self):
-        """Inicia una sesión de descarga (registra timestamp de inicio)."""
+        """Start a download session (records the start timestamp)."""
         if not self.stats["start_time"]:
             self.stats["start_time"] = datetime.now().isoformat()
 
     def reset(self):
-        """Reinicia el estado completamente (¡usar con cuidado!)."""
+        """Completely reset state (use with care!)."""
         self.downloaded_pmids.clear()
         self.failed_pmids.clear()
         self.metadata.clear()
@@ -251,24 +251,24 @@ class DownloadState:
 
     def get_last_successful_date(self) -> Optional[str]:
         """
-        Obtiene la fecha de la última descarga exitosa.
+        Get the date of the last successful download.
 
         Returns:
-            Fecha en formato YYYY/MM/DD o None si no hay
+            Date in YYYY/MM/DD format or None if none
         """
         return self.stats.get("last_successful_date")
 
     def set_last_successful_date(self, date_str: str):
         """
-        Guarda la fecha de la última descarga exitosa.
+        Save the date of the last successful download.
 
         Args:
-            date_str: Fecha en formato YYYY/MM/DD
+            date_str: Date in YYYY/MM/DD format
         """
         self.stats["last_successful_date"] = date_str
 
     def print_summary(self):
-        """Imprime un resumen del estado actual."""
+        """Print a summary of the current state."""
         progress = self.get_progress()
 
         print("\n" + "=" * 60)

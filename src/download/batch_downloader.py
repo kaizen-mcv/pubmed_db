@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-Descargador por lotes de artículos de PubMed.
+Batch downloader for PubMed articles.
 
-Cumple estrictamente con políticas de NCBI:
-- Rate limiting configurable
-- Gestión de errores y reintentos
-- Descarga por lotes eficiente
-- Recuperación ante interrupciones
+Strictly complies with NCBI policies:
+- Configurable rate limiting
+- Error handling and retries
+- Efficient batch downloading
+- Recovery from interruptions
 """
 
 import sys
@@ -17,24 +17,24 @@ from typing import List, Optional, Dict, Any
 from Bio import Entrez
 from urllib.error import HTTPError
 
-# Importar módulos del proyecto
+# Import project modules
 sys.path.insert(0, os.path.dirname(__file__))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 from rate_limiter import AdaptiveRateLimiter
 
-# Logger del módulo
+# Module logger
 logger = logging.getLogger(__name__)
 
 
 class PubMedBatchDownloader:
     """
-    Descargador por lotes que cumple con políticas de NCBI.
+    Batch downloader that complies with NCBI policies.
 
-    Características:
-    - Rate limiting automático
-    - Reintentos con backoff exponencial
-    - Descarga eficiente por lotes
-    - Manejo robusto de errores
+    Features:
+    - Automatic rate limiting
+    - Retries with exponential backoff
+    - Efficient batch downloading
+    - Robust error handling
     """
 
     def __init__(
@@ -45,32 +45,32 @@ class PubMedBatchDownloader:
         requests_per_second_off_peak: float = 10.0,
     ):
         """
-        Inicializa el descargador.
+        Initialize the downloader.
 
         Args:
-            email: Email requerido por NCBI
-            api_key: API Key opcional (aumenta límite a 10 req/s)
-            requests_per_second: Límite de requests/segundo
-            requests_per_second_off_peak: Límite en horas off-peak
+            email: Email required by NCBI
+            api_key: Optional API Key (raises limit to 10 req/s)
+            requests_per_second: Requests/second limit
+            requests_per_second_off_peak: Limit during off-peak hours
         """
-        # Configurar Entrez
+        # Configure Entrez
         Entrez.email = email
         if api_key:
             Entrez.api_key = api_key
-            # Con API key, usar límite mayor por defecto
+            # With API key, use higher limit by default
             if requests_per_second == 3.0:
                 requests_per_second = 10.0
 
-        # Rate limiter adaptativo
+        # Adaptive rate limiter
         self.rate_limiter = AdaptiveRateLimiter(
             requests_per_second=requests_per_second,
             requests_per_second_off_peak=requests_per_second_off_peak,
         )
 
-        # Configuración
+        # Configuration
         self.max_retries = 3
         self.retry_delay = 5
-        self.batch_size = 200  # IDs por batch (efetch acepta hasta 500)
+        self.batch_size = 200  # IDs per batch (efetch accepts up to 500)
 
     def search_pmids(
         self,
@@ -79,28 +79,28 @@ class PubMedBatchDownloader:
         retstart: int = 0,
     ) -> List[int]:
         """
-        Busca PMIDs usando esearch.
+        Search PMIDs using esearch.
 
         Args:
-            query: Query de búsqueda de PubMed
-            retmax: Número máximo de resultados a retornar
-            retstart: Offset de inicio
+            query: PubMed search query
+            retmax: Maximum number of results to return
+            retstart: Starting offset
 
         Returns:
-            Lista de PMIDs encontrados
+            List of PMIDs found
         """
         for attempt in range(self.max_retries):
             try:
                 # Rate limiting
                 self.rate_limiter.wait_if_needed()
 
-                # Búsqueda
+                # Search
                 handle = Entrez.esearch(
                     db="pubmed",
                     term=query,
                     retmax=retmax,
                     retstart=retstart,
-                    usehistory="y",  # Usar history server para grandes queries
+                    usehistory="y",  # Use history server for large queries
                 )
                 record = Entrez.read(handle)
                 handle.close()
@@ -139,20 +139,20 @@ class PubMedBatchDownloader:
         retmode: str = "xml",
     ) -> Optional[Any]:
         """
-        Descarga un lote de artículos usando efetch.
+        Download a batch of articles using efetch.
 
         Args:
-            pmids: Lista de PMIDs a descargar
-            rettype: Tipo de retorno (xml, medline, etc.)
-            retmode: Modo de retorno
+            pmids: List of PMIDs to download
+            rettype: Return type (xml, medline, etc.)
+            retmode: Return mode
 
         Returns:
-            Registros descargados o None si falla
+            Downloaded records or None if it fails
         """
         if not pmids:
             return None
 
-        # Convertir lista a string separada por comas
+        # Convert list to comma-separated string
         id_list = ",".join(str(pmid) for pmid in pmids)
 
         for attempt in range(self.max_retries):
@@ -181,7 +181,7 @@ class PubMedBatchDownloader:
                     continue
 
                 if e.code == 400:
-                    # Bad request, no reintentar
+                    # Bad request, do not retry
                     logger.error(f"Error 400 para PMIDs: {pmids[:5]}... (request inválido)")
                     return None
 
@@ -211,15 +211,15 @@ class PubMedBatchDownloader:
         retmode: str = "xml",
     ) -> Optional[Any]:
         """
-        Descarga un artículo individual.
+        Download a single article.
 
         Args:
-            pmid: PMID a descargar
-            rettype: Tipo de retorno
-            retmode: Modo de retorno
+            pmid: PMID to download
+            rettype: Return type
+            retmode: Return mode
 
         Returns:
-            Registro descargado o None si falla
+            Downloaded record or None if it fails
         """
         records = self.fetch_batch([pmid], rettype, retmode)
         if records and "PubmedArticle" in records and records["PubmedArticle"]:
@@ -233,15 +233,15 @@ class PubMedBatchDownloader:
         batch_size: Optional[int] = None,
     ) -> Dict[str, Any]:
         """
-        Descarga lista de PMIDs en lotes.
+        Download a list of PMIDs in batches.
 
         Args:
-            pmids: Lista de PMIDs a descargar
-            callback: Función callback(article_data) llamada por cada artículo
-            batch_size: Tamaño de lote (None = usar default)
+            pmids: List of PMIDs to download
+            callback: Callback function callback(article_data) called for each article
+            batch_size: Batch size (None = use default)
 
         Returns:
-            Estadísticas de la descarga
+            Download statistics
         """
         if batch_size is None:
             batch_size = self.batch_size
@@ -278,7 +278,7 @@ class PubMedBatchDownloader:
                 logger.warning(f"Lote {batch_num} falló")
                 failed += len(batch)
 
-        # Estadísticas finales
+        # Final statistics
         stats = {
             "total": total,
             "downloaded": downloaded,
@@ -290,13 +290,13 @@ class PubMedBatchDownloader:
 
     def get_total_count(self, query: str) -> int:
         """
-        Obtiene el conteo total de resultados para una query.
+        Get the total count of results for a query.
 
         Args:
-            query: Query de búsqueda
+            query: Search query
 
         Returns:
-            Número total de artículos que coinciden
+            Total number of matching articles
         """
         try:
             self.rate_limiter.wait_if_needed()
@@ -304,7 +304,7 @@ class PubMedBatchDownloader:
             handle = Entrez.esearch(
                 db="pubmed",
                 term=query,
-                retmax=0,  # Solo queremos el count
+                retmax=0,  # We only want the count
             )
             record = Entrez.read(handle)
             handle.close()
@@ -324,26 +324,26 @@ class PubMedBatchDownloader:
         date_to: Optional[str] = None,
     ) -> List[int]:
         """
-        Busca TODOS los PMIDs que coinciden con una query.
+        Search ALL PMIDs matching a query.
 
-        NOTA: PubMed ESearch tiene un límite de 9,999 resultados por búsqueda.
-        Para queries grandes, este método divide automáticamente por períodos
-        de tiempo (meses) para obtener todos los resultados.
+        NOTE: PubMed ESearch has a limit of 9,999 results per search.
+        For large queries, this method automatically divides by time periods
+        (months) to retrieve all results.
 
         Args:
-            query: Query de búsqueda
-            batch_size: Tamaño de cada página (max 9,999 por límite de PubMed)
-            max_results: Máximo de resultados (None = sin límite)
-            date_from: Fecha inicio formato YYYY/MM/DD (para subdivisión)
-            date_to: Fecha fin formato YYYY/MM/DD (para subdivisión)
+            query: Search query
+            batch_size: Size of each page (max 9,999 due to PubMed limit)
+            max_results: Maximum results (None = no limit)
+            date_from: Start date in YYYY/MM/DD format (for subdivision)
+            date_to: End date in YYYY/MM/DD format (for subdivision)
 
         Returns:
-            Lista completa de PMIDs
+            Complete list of PMIDs
         """
-        # Límite de PubMed ESearch
+        # PubMed ESearch limit
         PUBMED_MAX_RESULTS = 9999
 
-        # Obtener conteo total
+        # Get total count
         total_count = self.get_total_count(query)
         logger.info(f"Total de artículos encontrados: {total_count:,}")
 
@@ -352,10 +352,10 @@ class PubMedBatchDownloader:
             target_count = min(total_count, max_results)
             logger.info(f"Limitado a: {target_count:,}")
 
-        # Si hay más de 9999 resultados, necesitamos dividir por períodos
+        # If there are more than 9999 results, we need to split by periods
         if total_count > PUBMED_MAX_RESULTS:
             logger.warning(f"Query supera límite de {PUBMED_MAX_RESULTS:,} de PubMed. Dividiendo por períodos...")
-            # Extraer query base (sin fechas) para subdivisión
+            # Extract base query (without dates) for subdivision
             base_query = query.split(" AND ")[0] if " AND " in query and "[PDAT]" in query else query
             return self._search_by_time_periods(
                 base_query,
@@ -369,7 +369,7 @@ class PubMedBatchDownloader:
         batch_size = min(batch_size, PUBMED_MAX_RESULTS)
 
         while retstart < target_count:
-            # Calcular tamaño del siguiente lote
+            # Calculate size of next batch
             remaining = target_count - retstart
             current_batch = min(batch_size, remaining)
 
@@ -397,15 +397,15 @@ class PubMedBatchDownloader:
         date_to: Optional[str] = None,
     ) -> List[int]:
         """
-        Divide búsquedas grandes en períodos de tiempo para evitar el límite de 9999.
+        Split large searches into time periods to avoid the 9999 limit.
 
-        Estrategia: Buscar por meses. Si un mes tiene >9999, buscar por días.
+        Strategy: Search by months. If a month has >9999, search by days.
         """
         from datetime import datetime, timedelta
 
         PUBMED_MAX_RESULTS = 9999
 
-        # Parsear fechas
+        # Parse dates
         if date_from:
             start = datetime.strptime(date_from.replace("/", "-"), "%Y-%m-%d")
         else:
@@ -416,7 +416,7 @@ class PubMedBatchDownloader:
         else:
             end = datetime.now()
 
-        all_pmids = set()  # Usar set para evitar duplicados
+        all_pmids = set()  # Use set to avoid duplicates
         current = start
 
         logger.info(f"Buscando desde {start.strftime('%Y/%m/%d')} hasta {end.strftime('%Y/%m/%d')}...")
@@ -425,7 +425,7 @@ class PubMedBatchDownloader:
             if max_results and len(all_pmids) >= max_results:
                 break
 
-            # Intentar por mes primero
+            # Try by month first
             month_end = (current.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
             if month_end > end:
                 month_end = end
@@ -439,7 +439,7 @@ class PubMedBatchDownloader:
                 continue
 
             if count <= PUBMED_MAX_RESULTS:
-                # El mes cabe en una búsqueda
+                # The month fits in a single search
                 logger.debug(f"{current.strftime('%Y/%m')}: {count:,} artículos...")
                 pmids = self.search_pmids(period_query, retmax=PUBMED_MAX_RESULTS)
                 if pmids:
@@ -449,7 +449,7 @@ class PubMedBatchDownloader:
                     logger.warning(f"{current.strftime('%Y/%m')}: Error")
                 current = month_end + timedelta(days=1)
             else:
-                # Mes muy grande, buscar por días
+                # Month too large, search by days
                 logger.info(f"{current.strftime('%Y/%m')}: {count:,} artículos (dividiendo por días)...")
                 day_current = current
                 while day_current <= month_end:
@@ -468,7 +468,7 @@ class PubMedBatchDownloader:
                             else:
                                 logger.warning(f"{day_current.strftime('%Y/%m/%d')}: Error")
                         else:
-                            # Incluso un día tiene más de 9999 (muy raro)
+                            # Even a single day has more than 9999 (very rare)
                             logger.warning(f"Demasiados artículos en un día ({day_count}), obteniendo primeros {PUBMED_MAX_RESULTS}")
                             pmids = self.search_pmids(day_query, retmax=PUBMED_MAX_RESULTS)
                             if pmids:
