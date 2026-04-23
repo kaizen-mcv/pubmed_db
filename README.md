@@ -40,7 +40,7 @@ $EDITOR config/pubmed_config.yaml   # set your email and search window
 
 # Create the PostgreSQL schema
 psql -h "$PUBMED_DB_HOST" -U "$PUBMED_DB_USER" -d "$PUBMED_DB_NAME" \
-  -f scripts/create_tables.sql
+  -f scripts/sql/create_tables.sql
 
 # Run the first download
 python scripts/download_pubmed.py
@@ -121,8 +121,8 @@ pubmed_db/
 ├── config/               # YAML configs + settings loader
 ├── data/                 # Runtime artefacts (logs, state) — gitignored
 ├── docs/                 # Additional documentation
-├── scripts/              # Entry points and SQL schema files
-│   └── *.sql             # DDL for each logical schema
+├── scripts/              # Entry points (download, cron, import…)
+│   └── sql/              # DDL for each logical schema
 ├── src/                  # Library code
 │   ├── database/         # Connection singleton + repositories
 │   ├── download/         # PubMed client, rate limiter, state manager
@@ -146,7 +146,7 @@ The project targets a multi-schema PostgreSQL database:
 | `sm_attr` | Auxiliary attribute tables (journals, keywords…) |
 | `sm_result` | Computed results (`author_specialties`, `authors_norm`, `authors_orcid`) |
 
-DDL lives under [`scripts/`](scripts/) (`create_*.sql`). For the full
+DDL lives under [`scripts/sql/`](scripts/sql/) (`create_*.sql`). For the full
 schema reference see [`docs/schema.md`](docs/schema.md). For the author
 deduplication strategy see
 [`docs/author_deduplication.md`](docs/author_deduplication.md).
