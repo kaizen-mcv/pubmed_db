@@ -17,17 +17,17 @@ search:
 ## Ejecución
 
 ```bash
-cd /home/marc/db-projects/pubmed
+cd $PROJECT_DIR
 source venv/bin/activate
 
 # Primero verificar la conexión a la BD
-PGPASSWORD='REDACTED_PWD' psql -h localhost -U pubmed_user -d pubmed_db -c "SELECT COUNT(*) as articulos_antes FROM articles;"
+PGPASSWORD="$PGPASSWORD" psql -h localhost -U pubmed_user -d pubmed_db -c "SELECT COUNT(*) as articulos_antes FROM articles;"
 
 # Ejecutar descarga de prueba
 python scripts/download_pubmed.py
 
 # Verificar resultados
-PGPASSWORD='REDACTED_PWD' psql -h localhost -U pubmed_user -d pubmed_db << 'EOF'
+PGPASSWORD="$PGPASSWORD" psql -h localhost -U pubmed_user -d pubmed_db << 'EOF'
 SELECT COUNT(*) as articulos_despues FROM articles;
 SELECT COUNT(*) as autores_espanoles FROM article_authors;
 

@@ -13,7 +13,7 @@ Interpreta la solicitud del usuario y ejecuta la consulta SQL apropiada. Puedes 
 ## Conexión a la Base de Datos
 
 ```bash
-PGPASSWORD='REDACTED_PWD' psql -h localhost -U pubmed_user -d pubmed_db
+PGPASSWORD="$PGPASSWORD" psql -h localhost -U pubmed_user -d pubmed_db
 ```
 
 ## Esquema de Tablas

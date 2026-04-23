@@ -1,6 +1,17 @@
-# PubMed Downloader - Investigadores Españoles
+# pubmed_db
 
-Sistema para descarga de artículos de PubMed con filtrado de autores con afiliación española.
+Base de datos PostgreSQL con artículos de PubMed filtrados por afiliación
+española. Incluye descarga incremental, enriquecimiento con términos MeSH y
+clasificación por especialidad médica.
+
+**Stack:** Python 3.11+, PostgreSQL, API E-Utilities de NCBI.
+
+## Qué hace
+
+- Descarga incremental de artículos desde PubMed con respeto a rate limits
+- Filtra autores con afiliación española (universidades, hospitales, CSIC, etc.)
+- Enriquece con términos MeSH y mapea a especialidades médicas
+- Genera estadísticas: productividad por autor, revistas, temporalidad
 
 ## Estructura del Proyecto
 

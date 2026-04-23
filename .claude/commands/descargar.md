@@ -17,7 +17,7 @@ search:
 ## Ejecución
 
 ```bash
-cd /home/marc/db-projects/pubmed
+cd $PROJECT_DIR
 source venv/bin/activate
 
 # Descarga nueva

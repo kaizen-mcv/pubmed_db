@@ -3,7 +3,7 @@
 Script para CRON - Actualización incremental de PubMed.
 
 Ejecutar diariamente (recomendado: horas off-peak de NCBI):
-    0 3 * * * cd /home/marc/db-projects/pubmed && ./venv/bin/python scripts/cron_update.py >> data/logs/cron.log 2>&1
+    0 3 * * * cd $PROJECT_DIR && ./venv/bin/python scripts/cron_update.py >> data/logs/cron.log 2>&1
 
 Este script:
 1. Descarga artículos nuevos desde la última ejecución (--incremental)

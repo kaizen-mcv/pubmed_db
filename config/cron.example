@@ -7,7 +7,7 @@
 #
 # Requisitos:
 #   - Variable de entorno PUBMED_DB_PASSWORD debe estar definida
-#   - El entorno virtual debe estar en /home/marc/db-projects/pubmed/venv
+#   - El entorno virtual debe estar en $PROJECT_DIR/venv
 #   - El usuario debe tener permisos de escritura en data/logs/
 #
 # =============================================================================
@@ -23,14 +23,14 @@ PATH=/usr/local/bin:/usr/bin:/bin
 # Descarga incremental + actualización de especialidades
 # Ejecuta a las 3:00 AM (hora off-peak de NCBI para España)
 # Mejor hora: 9pm-5am EST = 3am-11am hora española
-0 3 * * * cd /home/marc/db-projects/pubmed && ./venv/bin/python scripts/cron_update.py >> data/logs/cron.log 2>&1
+0 3 * * * cd $PROJECT_DIR && ./venv/bin/python scripts/cron_update.py >> data/logs/cron.log 2>&1
 
 # =============================================================================
 # ESTADÍSTICAS SEMANALES (opcional)
 # =============================================================================
 
 # Genera estadísticas detalladas cada domingo a las 6:00 AM
-0 6 * * 0 cd /home/marc/db-projects/pubmed && ./venv/bin/python scripts/statistics.py >> data/logs/stats.log 2>&1
+0 6 * * 0 cd $PROJECT_DIR && ./venv/bin/python scripts/statistics.py >> data/logs/stats.log 2>&1
 
 # =============================================================================
 # MANTENIMIENTO MENSUAL (opcional)
@@ -38,7 +38,7 @@ PATH=/usr/local/bin:/usr/bin:/bin
 
 # Actualizar términos MeSH (se publican anualmente, pero por si acaso)
 # Primer día de cada mes a las 4:00 AM
-# 0 4 1 * * cd /home/marc/db-projects/pubmed && ./venv/bin/python scripts/import_mesh_terms.py >> data/logs/mesh.log 2>&1
+# 0 4 1 * * cd $PROJECT_DIR && ./venv/bin/python scripts/import_mesh_terms.py >> data/logs/mesh.log 2>&1
 
 # =============================================================================
 # NOTAS

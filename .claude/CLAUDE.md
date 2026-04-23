@@ -207,7 +207,7 @@ Especialidades inferidas por autor (tabla derivada).
 ### 1. Preparar entorno
 
 ```bash
-cd /home/marc/db-projects/pubmed
+cd $PROJECT_DIR
 source venv/bin/activate
 pip install -r config/requirements.txt
 ```
@@ -431,7 +431,7 @@ crontab -e
 
 ```cron
 # Ejecutar a las 3:00 AM (hora off-peak de NCBI)
-0 3 * * * cd /home/marc/db-projects/pubmed && PUBMED_DB_PASSWORD='xxx' ./venv/bin/python scripts/cron_update.py >> data/logs/cron.log 2>&1
+0 3 * * * cd $PROJECT_DIR && PUBMED_DB_PASSWORD='xxx' ./venv/bin/python scripts/cron_update.py >> data/logs/cron.log 2>&1
 ```
 
 ### Script CRON
